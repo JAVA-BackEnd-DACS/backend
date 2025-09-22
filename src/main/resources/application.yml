@@ -1,0 +1,10 @@
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include: "health,info"
+server:
+  port :  9003
+  servlet:
+    contextPath: /backend
