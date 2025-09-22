@@ -22,7 +22,7 @@ public class HomeController {
 
 	@GetMapping(value = "/ping")
 	public String ping() {
-		return "Hola desde MS Conector de DACS PONG";
+		return "Hola desde MS Backend de DACS PONG";
 	}
 
 	@GetMapping(value = "/version")
