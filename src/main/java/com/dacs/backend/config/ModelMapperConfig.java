@@ -20,6 +20,11 @@ public class ModelMapperConfig {
         TypeMap<Cirugia, CirugiaDTO.Response> cirugiaMap = mm.emptyTypeMap(Cirugia.class, CirugiaDTO.Response.class);
         cirugiaMap.addMappings(m -> m.skip(CirugiaDTO.Response::setPaciente));
         cirugiaMap.implicitMappings();
+        //??
+        // Mapeo CirugiaDTO.Update -> Cirugia (skip id para no sobrescribir el id de la entidad cargada)
+        TypeMap<CirugiaDTO.Update, Cirugia> updateToCirugiaMap = mm.emptyTypeMap(CirugiaDTO.Update.class, Cirugia.class);
+        updateToCirugiaMap.addMappings(m -> m.skip(Cirugia::setId));
+        updateToCirugiaMap.implicitMappings();
 
         return mm;
     }

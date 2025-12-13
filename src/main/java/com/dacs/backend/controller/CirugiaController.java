@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dacs.backend.dto.MiembroEquipoMedicoDto;
 import com.dacs.backend.dto.CirugiaDTO;
 import com.dacs.backend.dto.PacienteDTO;
+import com.dacs.backend.model.entity.Quirofano;
 import com.dacs.backend.service.CirugiaService;
 
 import org.modelmapper.ModelMapper;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.mapper.CirugiaMapper;
 import com.dacs.backend.model.entity.Cirugia;
 import com.dacs.backend.model.entity.Paciente;
 import com.dacs.backend.model.repository.CirugiaRepository;
@@ -51,6 +53,12 @@ public class CirugiaController {
 
     @Autowired
     private PacienteRepository pacienteRepository;
+
+    @Autowired
+    private CirugiaMapper cirugiaMapper;
+
+    @Autowired
+    private com.dacs.backend.model.repository.QuirofanoRepository quirofanoRepository;
 
     @GetMapping("")
     public PageResponse<CirugiaDTO.Response> list(
@@ -112,10 +120,33 @@ public class CirugiaController {
     public CirugiaDTO.Response update(@PathVariable String id, @RequestBody CirugiaDTO.Update cirugiaDto) {
         Cirugia entity = cirugiaService.getById(Long.parseLong(id))
                 .orElseThrow(() -> new RuntimeException("Cirugia no encontrada"));
-        modelMapper.map(cirugiaDto, entity);
+        
+        // Mapear campos simples manualmente para evitar problemas con relaciones
+        entity.setServicio(cirugiaDto.getServicio());
+        entity.setPrioridad(cirugiaDto.getPrioridad());
+        entity.setFecha_hora_inicio(cirugiaDto.getFecha_hora_inicio());
+        entity.setEstado(cirugiaDto.getEstado());
+        entity.setAnestesia(cirugiaDto.getAnestesia());
+        entity.setTipo(cirugiaDto.getTipo());
+        
+        // Mapear relaciones (paciente y quirofano) si vienen en el DTO
+        if (cirugiaDto.getPaciente() != null) {
+            Paciente paciente = pacienteRepository.findById(cirugiaDto.getPaciente())
+                    .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
+            entity.setPaciente(paciente);
+        }
+        
+        if (cirugiaDto.getQuirofano() != null) {
+            Quirofano quirofano = quirofanoRepository.findById(cirugiaDto.getQuirofano())
+                    .orElseThrow(() -> new RuntimeException("Quirofano no encontrado"));
+            entity.setQuirofano(quirofano);
+        }
+        
+        System.err.println("Datos recibidos para actualizar cirugia: " + cirugiaDto.getQuirofano());
+        System.err.println("Entidad antes de guardar: " + entity);
         cirugiaService.save(entity);
-
-        return modelMapper.map(entity, CirugiaDTO.Response.class);
+        System.out.println("Cirugia actualizada: " + entity);
+        return cirugiaMapper.toResponseDto(entity);
     }
 
     @DeleteMapping("/{id}")
@@ -133,11 +164,12 @@ public class CirugiaController {
     public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> getEquipoMedico(@PathVariable Long id) {
 
         List<MiembroEquipoMedicoDto.Response> EquipoEntity = cirugiaService.getEquipoMedico(id);
-        return ResponseEntity.ok(EquipoEntity);    
+        return ResponseEntity.ok(EquipoEntity);
     }
 
     @PostMapping("/{id}/equipo-medico")
-    public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> postEquipoMedico(@PathVariable Long id, @RequestBody List<MiembroEquipoMedicoDto.Create> entityEquipoMedico) {
+    public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> postEquipoMedico(@PathVariable Long id,
+            @RequestBody List<MiembroEquipoMedicoDto.Create> entityEquipoMedico) {
 
         List<MiembroEquipoMedicoDto.Response> resp = cirugiaService.saveEquipoMedico(id, entityEquipoMedico);
         return ResponseEntity.status((HttpStatus.CREATED)).body(resp);
