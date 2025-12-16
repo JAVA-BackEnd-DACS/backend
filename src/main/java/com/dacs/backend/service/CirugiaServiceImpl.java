@@ -1,6 +1,7 @@
 package com.dacs.backend.service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,7 @@ import com.dacs.backend.dto.MiembroEquipoMedicoDto;
 import com.dacs.backend.dto.PacienteDTO;
 import com.dacs.backend.dto.PageResponse;
 import com.dacs.backend.dto.PersonalDto;
+import com.dacs.backend.dto.ServicioDto;
 import com.dacs.backend.mapper.CirugiaMapper;
 import com.dacs.backend.model.entity.Cirugia;
 import com.dacs.backend.model.entity.EquipoMedico;
@@ -29,6 +31,7 @@ import com.dacs.backend.model.repository.CirugiaRepository;
 import com.dacs.backend.model.repository.EquipoMedicoRepository;
 import com.dacs.backend.model.repository.PacienteRepository;
 import com.dacs.backend.model.repository.PersonalRepository;
+import com.dacs.backend.model.repository.ServicioRepository;
 
 
 @Service
@@ -48,6 +51,9 @@ public class CirugiaServiceImpl implements CirugiaService {
     private PacienteRepository pacienteRepository;
     
     @Autowired
+    private ServicioRepository servicioRepository;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Override
@@ -57,7 +63,7 @@ public class CirugiaServiceImpl implements CirugiaService {
 
     @Override
     @Transactional
-    public CirugiaDTO.Response create(CirugiaDTO.Create request) {
+    public CirugiaDTO.Response create(CirugiaDTO.Request request) {
         // mapear request -> entidad (resuelve relaciones dentro del mapper)
         Cirugia entity = cirugiaMapper.toEntity(request);
         Cirugia saved = cirugiaRepository.save(entity);
@@ -244,6 +250,33 @@ public class CirugiaServiceImpl implements CirugiaService {
             }
         }
 
+        // Mapear servicios (batch fetch para evitar N+1)
+        List<Long> servicioIds = entidades.stream()
+                .map(Cirugia::getServicio)
+                .filter(Objects::nonNull)
+                .map(s -> s.getId())
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (!servicioIds.isEmpty()) {
+            List<com.dacs.backend.model.entity.Servicio> servicios = servicioRepository.findAllById(servicioIds);
+            Map<Long, com.dacs.backend.model.entity.Servicio> serviciosMap = servicios.stream()
+                    .collect(Collectors.toMap(com.dacs.backend.model.entity.Servicio::getId, s -> s));
+
+            for (int i = 0; i < entidades.size(); i++) {
+                var entidad = entidades.get(i);
+                var dto = dtos.get(i);
+                if (entidad.getServicio() != null && entidad.getServicio().getId() != null) {
+                    var servicioEntity = serviciosMap.get(entidad.getServicio().getId());
+                    if (servicioEntity != null) {
+                        var servicioDto = modelMapper.map(servicioEntity, ServicioDto.class);
+                        dto.setServicio(servicioDto);
+                    }
+                }
+            }
+        }
+
         PageResponse<CirugiaDTO.Response> resp = new PageResponse<>();
         resp.setContent(dtos);
         resp.setNumber(p.getNumber());
@@ -251,5 +284,13 @@ public class CirugiaServiceImpl implements CirugiaService {
         resp.setTotalElements(p.getTotalElements());
         resp.setTotalPages(p.getTotalPages());
         return resp;
+    }
+
+
+    @Override
+    public List<ServicioDto> getServicios() {
+        return servicioRepository.findAll().stream()
+                .map(servicio -> modelMapper.map(servicio, ServicioDto.class))
+                .collect(Collectors.toList());
     }
 }

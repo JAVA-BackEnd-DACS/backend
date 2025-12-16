@@ -8,6 +8,7 @@ import com.dacs.backend.dto.CirugiaDTO;
 import com.dacs.backend.dto.PacienteDTO;
 import com.dacs.backend.model.entity.Quirofano;
 import com.dacs.backend.service.CirugiaService;
+import com.dacs.backend.service.TurnoService;
 
 import org.modelmapper.ModelMapper;
 
@@ -25,12 +26,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.ServicioDto;
 import com.dacs.backend.mapper.CirugiaMapper;
 import com.dacs.backend.model.entity.Cirugia;
 import com.dacs.backend.model.entity.Paciente;
 import com.dacs.backend.model.repository.CirugiaRepository;
 import com.dacs.backend.model.repository.PacienteRepository;
 
+import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,13 +50,16 @@ public class CirugiaController {
     private CirugiaService cirugiaService;
 
     @Autowired
+    private TurnoService turnoService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Autowired
-    private CirugiaRepository cirugiaRepository;
+    private CirugiaRepository cirugiaRepository; // mover de aca
 
     @Autowired
-    private PacienteRepository pacienteRepository;
+    private PacienteRepository pacienteRepository; // mover de aca
 
     @Autowired
     private CirugiaMapper cirugiaMapper;
@@ -64,85 +71,24 @@ public class CirugiaController {
     public PageResponse<CirugiaDTO.Response> list(
             @RequestParam(name = "page", required = false, defaultValue = "0") int page,
             @RequestParam(name = "size", required = false, defaultValue = "16") int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Cirugia> p = cirugiaRepository.findAll(pageable);
-
-        // Map entities -> DTOs (without paciente yet)
-        List<Cirugia> entidades = p.getContent();
-        List<CirugiaDTO.Response> dtos = entidades.stream()
-                .map(e -> modelMapper.map(e, CirugiaDTO.Response.class))
-                .collect(Collectors.toList());
-
-        // Recolectar pacienteIds de las cirugías
-        List<Long> pacienteIds = entidades.stream()
-                .map(Cirugia::getPaciente)
-                .filter(Objects::nonNull)
-                .map(ent -> ent.getId())
-                .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toList());
-
-        if (!pacienteIds.isEmpty()) {
-            // Cargar pacientes en batch y mapear a DTOs
-            List<Paciente> pacientes = pacienteRepository.findAllById(pacienteIds);
-            Map<Long, Paciente> pacientesMap = pacientes.stream()
-                    .collect(Collectors.toMap(Paciente::getId, pc -> pc));
-
-            for (int i = 0; i < entidades.size(); i++) {
-                var entidad = entidades.get(i);
-                var dto = dtos.get(i);
-                if (entidad.getPaciente() != null && entidad.getPaciente().getId() != null) {
-                    var pacienteEntity = pacientesMap.get(entidad.getPaciente().getId());
-                    if (pacienteEntity != null) {
-                        var pacienteDto = modelMapper.map(pacienteEntity, PacienteDTO.Response.class);
-                        dto.setPaciente(pacienteDto); // requiere que CirugiaDTO tenga setPaciente(PacienteDto)
-                    }
-                }
-            }
-        }
-
-        PageResponse<CirugiaDTO.Response> resp = new PageResponse<>();
-        resp.setContent(dtos);
-        resp.setNumber(p.getNumber());
-        resp.setSize(p.getSize());
-        resp.setTotalElements(p.getTotalElements());
-        resp.setTotalPages(p.getTotalPages());
-        return resp;
+        return cirugiaService.get(page, size);
     }
-
+    
     @PostMapping("")
-    public CirugiaDTO.Response create(@RequestBody CirugiaDTO.Create cirugiaRequestDto) {
+    public CirugiaDTO.Response create(@RequestBody CirugiaDTO.Request cirugiaRequestDto) {
         // delegar al servicio que resuelve relaciones y retorna el DTO de respuesta
         return cirugiaService.create(cirugiaRequestDto);
     }
 
-    @PutMapping("/{id}")
-    public CirugiaDTO.Response update(@PathVariable String id, @RequestBody CirugiaDTO.Update cirugiaDto) {
+    @PutMapping("/{id}") //// ????
+    public CirugiaDTO.Response update(@PathVariable String id, @RequestBody CirugiaDTO.Request cirugiaDto) {
         Cirugia entity = cirugiaService.getById(Long.parseLong(id))
                 .orElseThrow(() -> new RuntimeException("Cirugia no encontrada"));
-        
-        // Mapear campos simples manualmente para evitar problemas con relaciones
-        entity.setServicio(cirugiaDto.getServicio());
-        entity.setPrioridad(cirugiaDto.getPrioridad());
-        entity.setFecha_hora_inicio(cirugiaDto.getFecha_hora_inicio());
-        entity.setEstado(cirugiaDto.getEstado());
-        entity.setAnestesia(cirugiaDto.getAnestesia());
-        entity.setTipo(cirugiaDto.getTipo());
-        
-        // Mapear relaciones (paciente y quirofano) si vienen en el DTO
-        if (cirugiaDto.getPaciente() != null) {
-            Paciente paciente = pacienteRepository.findById(cirugiaDto.getPaciente())
-                    .orElseThrow(() -> new RuntimeException("Paciente no encontrado"));
-            entity.setPaciente(paciente);
-        }
-        
-        if (cirugiaDto.getQuirofano() != null) {
-            Quirofano quirofano = quirofanoRepository.findById(cirugiaDto.getQuirofano())
-                    .orElseThrow(() -> new RuntimeException("Quirofano no encontrado"));
-            entity.setQuirofano(quirofano);
-        }
-        
-        System.err.println("Datos recibidos para actualizar cirugia: " + cirugiaDto.getQuirofano());
+
+        // Usar mapper para actualizar entidad (mantiene el ID original)
+        entity = cirugiaMapper.toEntity(cirugiaDto);
+
+        System.err.println("Datos recibidos para actualizar cirugia: " + cirugiaDto.getQuirofanoId());
         System.err.println("Entidad antes de guardar: " + entity);
         cirugiaService.save(entity);
         System.out.println("Cirugia actualizada: " + entity);
@@ -161,7 +107,8 @@ public class CirugiaController {
     }
 
     @GetMapping("/{id}/equipo-medico")
-    public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> getEquipoMedico(@PathVariable Long id) {
+    public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> getEquipoMedico(@PathVariable Long id)
+            throws Exception {
 
         List<MiembroEquipoMedicoDto.Response> EquipoEntity = cirugiaService.getEquipoMedico(id);
         return ResponseEntity.ok(EquipoEntity);
@@ -169,10 +116,21 @@ public class CirugiaController {
 
     @PostMapping("/{id}/equipo-medico")
     public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> postEquipoMedico(@PathVariable Long id,
-            @RequestBody List<MiembroEquipoMedicoDto.Create> entityEquipoMedico) {
+            @RequestBody List<MiembroEquipoMedicoDto.Create> entityEquipoMedico) throws Exception {
 
         List<MiembroEquipoMedicoDto.Response> resp = cirugiaService.saveEquipoMedico(id, entityEquipoMedico);
         return ResponseEntity.status((HttpStatus.CREATED)).body(resp);
+    }
+
+    @GetMapping("/horarios-disponibles")
+    public ResponseEntity<List<LocalDateTime>> getTurnosDisponibles(@RequestParam Integer cantidadProximosDias,
+            @RequestParam Long servicioId) throws Exception {
+        return ResponseEntity.ok(turnoService.getTurnosDisponibles(servicioId, cantidadProximosDias));
+    }
+
+    @GetMapping("/servicios")
+    public ResponseEntity<List<ServicioDto>> getServicios() throws Exception {
+        return ResponseEntity.ok(cirugiaService.getServicios());
     }
 
 }

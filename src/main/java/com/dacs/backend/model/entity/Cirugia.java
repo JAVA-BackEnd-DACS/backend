@@ -22,9 +22,6 @@ public class Cirugia {
     private Long id;
 
     @Column(nullable = false)
-    private String servicio;
-
-    @Column(nullable = false)
     private String prioridad;
 
     @Column(nullable = false)
@@ -46,4 +43,8 @@ public class Cirugia {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "quirofano_id")
     private Quirofano quirofano;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "servicio_id")
+    private Servicio servicio;
 }
