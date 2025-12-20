@@ -10,14 +10,12 @@ public interface CommonService<E> {
 	
 	public Boolean existById(Long id);
 	
-	public List<E> getAll();
-	
 	public void delete(Long id);
 	
 	public E save(E entity);
-	
-	public List<E> find(Map<String,Object> filter);
-	
+		
 	public E getBy(Map<String,Object> filter);
+
+	public List<E> getAll();
 
 }

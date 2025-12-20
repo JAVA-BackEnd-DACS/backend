@@ -56,11 +56,6 @@ public class PacienteServiceImpl implements PacienteService {
     }
 
     @Override
-    public List<Paciente> find(Map<String, Object> filter) {
-        throw new UnsupportedOperationException();
-    }
-    
-    @Override
     public Paciente getBy(Map<String, Object> filter) {
         throw new UnsupportedOperationException();
     }

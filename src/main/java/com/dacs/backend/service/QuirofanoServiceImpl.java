@@ -42,12 +42,6 @@ public class QuirofanoServiceImpl implements QuirofanoService {
     }
 
     @Override
-    public java.util.List<Quirofano> find(java.util.Map<String, Object> filter
-    ) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Quirofano getBy(java.util.Map<String, Object> filter) {
         throw new UnsupportedOperationException();
     }

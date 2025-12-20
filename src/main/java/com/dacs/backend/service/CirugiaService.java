@@ -11,7 +11,6 @@ import com.dacs.backend.dto.PageResponse;
 import com.dacs.backend.dto.ServicioDto;
 
 public interface CirugiaService extends CommonService<Cirugia> {
-    CirugiaDTO.Response create(CirugiaDTO.Request request);
 
     List<MiembroEquipoMedicoDto.Response> saveEquipoMedico(Long id, List<MiembroEquipoMedicoDto.Create> entity);
     
@@ -21,4 +20,7 @@ public interface CirugiaService extends CommonService<Cirugia> {
 
     List<ServicioDto> getServicios();
 
+    CirugiaDTO.Response create(CirugiaDTO.Request cirugiaRequestDto) throws Exception;
+
+    CirugiaDTO.Response update(Long id, CirugiaDTO.Request cirugiaDto) throws Exception;
 }

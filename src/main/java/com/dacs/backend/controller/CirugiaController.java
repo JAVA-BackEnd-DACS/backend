@@ -52,66 +52,40 @@ public class CirugiaController {
     @Autowired
     private TurnoService turnoService;
 
-    @Autowired
-    private ModelMapper modelMapper;
-
-    @Autowired
-    private CirugiaRepository cirugiaRepository; // mover de aca
-
-    @Autowired
-    private PacienteRepository pacienteRepository; // mover de aca
-
-    @Autowired
-    private CirugiaMapper cirugiaMapper;
-
-    @Autowired
-    private com.dacs.backend.model.repository.QuirofanoRepository quirofanoRepository;
-
     @GetMapping("")
-    public PageResponse<CirugiaDTO.Response> list(
+    public ResponseEntity<PageResponse<CirugiaDTO.Response>> getByPage(
             @RequestParam(name = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(name = "size", required = false, defaultValue = "16") int size) {
-        return cirugiaService.get(page, size);
+            @RequestParam(name = "size", required = false, defaultValue = "16") int size) throws Exception {
+        PageResponse<CirugiaDTO.Response> cirugias = cirugiaService.get(page, size);
+        return ResponseEntity.ok(cirugias);
     }
-    
+
     @PostMapping("")
-    public CirugiaDTO.Response create(@RequestBody CirugiaDTO.Request cirugiaRequestDto) {
-        // delegar al servicio que resuelve relaciones y retorna el DTO de respuesta
-        return cirugiaService.create(cirugiaRequestDto);
+    public ResponseEntity<CirugiaDTO.Response> create(@RequestBody CirugiaDTO.Request cirugiaRequestDto)
+            throws Exception {
+        CirugiaDTO.Response cirugiaResponse = cirugiaService.create(cirugiaRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(cirugiaResponse);
     }
 
-    @PutMapping("/{id}") //// ????
-    public CirugiaDTO.Response update(@PathVariable String id, @RequestBody CirugiaDTO.Request cirugiaDto) {
-        Cirugia entity = cirugiaService.getById(Long.parseLong(id))
-                .orElseThrow(() -> new RuntimeException("Cirugia no encontrada"));
-
-        // Usar mapper para actualizar entidad (mantiene el ID original)
-        entity = cirugiaMapper.toEntity(cirugiaDto);
-
-        System.err.println("Datos recibidos para actualizar cirugia: " + cirugiaDto.getQuirofanoId());
-        System.err.println("Entidad antes de guardar: " + entity);
-        cirugiaService.save(entity);
-        System.out.println("Cirugia actualizada: " + entity);
-        return cirugiaMapper.toResponseDto(entity);
+    @PutMapping("/{id}")
+    public ResponseEntity<CirugiaDTO.Response> update(@PathVariable Long id,
+            @RequestBody CirugiaDTO.Request cirugiaDto) throws Exception {
+        CirugiaDTO.Response response = cirugiaService.update(id, cirugiaDto);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Object> delete(@PathVariable Long id) throws Exception {
-        java.util.Optional<Cirugia> cirugia = cirugiaService.getById(id);
-        if (cirugia.isPresent()) {
-            cirugiaService.delete(id);
-            return ResponseEntity.ok().build();
-        } else {
-            throw new Exception("Cirugia no encontrada");
-        }
+    public ResponseEntity<Object> delete(@PathVariable Long id) {
+        cirugiaService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/equipo-medico")
     public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> getEquipoMedico(@PathVariable Long id)
             throws Exception {
 
-        List<MiembroEquipoMedicoDto.Response> EquipoEntity = cirugiaService.getEquipoMedico(id);
-        return ResponseEntity.ok(EquipoEntity);
+        List<MiembroEquipoMedicoDto.Response> Equipo = cirugiaService.getEquipoMedico(id);
+        return ResponseEntity.ok(Equipo);
     }
 
     @PostMapping("/{id}/equipo-medico")

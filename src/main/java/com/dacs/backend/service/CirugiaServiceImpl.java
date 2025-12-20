@@ -33,7 +33,6 @@ import com.dacs.backend.model.repository.PacienteRepository;
 import com.dacs.backend.model.repository.PersonalRepository;
 import com.dacs.backend.model.repository.ServicioRepository;
 
-
 @Service
 public class CirugiaServiceImpl implements CirugiaService {
 
@@ -49,7 +48,7 @@ public class CirugiaServiceImpl implements CirugiaService {
 
     @Autowired
     private PacienteRepository pacienteRepository;
-    
+
     @Autowired
     private ServicioRepository servicioRepository;
 
@@ -76,14 +75,9 @@ public class CirugiaServiceImpl implements CirugiaService {
         return cirugiaRepository.save(entity);
     }
 
-    @Override   
+    @Override
     public Boolean existById(Long id) {
         return cirugiaRepository.existsById(id);
-    }
-
-    @Override
-    public java.util.List<Cirugia> getAll() {
-        return cirugiaRepository.findAll();
     }
 
     @Override
@@ -93,13 +87,26 @@ public class CirugiaServiceImpl implements CirugiaService {
     }
 
     @Override
-    public List<Cirugia> find(java.util.Map<String, Object> filter) {
+    public Cirugia getBy(Map<String, Object> filter) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Cirugia getBy(Map<String, Object> filter) {
-        throw new UnsupportedOperationException();
+    public CirugiaDTO.Response update(Long id, CirugiaDTO.Request requestDto) {
+        if (!cirugiaRepository.existsById(id)) {
+            throw new IllegalArgumentException("Cirugia no encontrada id=" + id);
+        }
+        Cirugia entity = cirugiaMapper.toEntity(requestDto);
+        if (entity == null) {
+            throw new IllegalArgumentException("La entidad Cirugia no puede ser null");
+        }
+        return cirugiaMapper.toResponseDto(cirugiaRepository.save(entity));
+    }
+
+
+    @Override
+    public List<Cirugia> getAll() {
+        return cirugiaRepository.findAll();
     }
 
     @Override
@@ -144,11 +151,11 @@ public class CirugiaServiceImpl implements CirugiaService {
 
     @Override
     @Transactional
-    public List<MiembroEquipoMedicoDto.Response> saveEquipoMedico(Long cirugiaId, List<MiembroEquipoMedicoDto.Create> req) {
+    public List<MiembroEquipoMedicoDto.Response> saveEquipoMedico(Long cirugiaId,
+            List<MiembroEquipoMedicoDto.Create> req) {
         // si la intención es reemplazar el equipo, eliminar los existentes primero
         equipoMedicoRepository.deleteByCirugiaId(cirugiaId);
 
-        // ahora seguimos construyendo y guardando los nuevos miembros (igual que antes)
         // validar existencia de la cirugía
         Cirugia cirugia = cirugiaRepository.findById(cirugiaId)
                 .orElseThrow(() -> new IllegalArgumentException("Cirugia no encontrada id=" + cirugiaId));
@@ -169,7 +176,17 @@ public class CirugiaServiceImpl implements CirugiaService {
             personalMap = Map.of();
         }
 
-        // construir entidades a guardar
+        List<EquipoMedico> toSave = construirEquipoMedico(req, cirugia, personalMap);
+        if (toSave.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        // guardar en batch y mapear resultado a DTOs
+        List<EquipoMedico> saved = equipoMedicoRepository.saveAll(toSave);
+        return mapearEquipoMedicoAResponse(saved);
+    }
+
+    private List<EquipoMedico> construirEquipoMedico(List<MiembroEquipoMedicoDto.Create> req, Cirugia cirugia, Map<Long, Personal> personalMap) {
         List<EquipoMedico> toSave = new java.util.ArrayList<>();
         for (MiembroEquipoMedicoDto.Create item : req) {
             Personal personal = personalMap.get(item.getPersonalId());
@@ -183,28 +200,19 @@ public class CirugiaServiceImpl implements CirugiaService {
             e.setRol(item.getRol());
             toSave.add(e);
         }
+        return toSave;
+    }
 
-        // debug rápido para entender por qué podría estar vacío
-        System.err.println("createEquipoMedico - req.size=" + (req == null ? 0 : req.size())
-                + " personalIds=" + personalIds
-                + " toSave.size=" + toSave.size());
-
-        if (toSave.isEmpty()) {
-            return java.util.Collections.emptyList();
-        }
-
-        // guardar en batch y mapear resultado a DTOs
-        List<EquipoMedico> saved = equipoMedicoRepository.saveAll(toSave);
-        // opcional: equipoMedicoRepository.flush(); // si tu repo extiende JpaRepository y quieres asegurar flush
-
+    private List<MiembroEquipoMedicoDto.Response> mapearEquipoMedicoAResponse(List<EquipoMedico> saved) {
         return saved.stream().map(e -> {
             MiembroEquipoMedicoDto.Response dto = modelMapper.map(e, MiembroEquipoMedicoDto.Response.class);
             // asegurar campos explícitos
             dto.setRol(e.getRol());
-            if (e.getCirugia() != null) dto.setCirugiaId(e.getCirugia().getId());
+            if (e.getCirugia() != null)
+                dto.setCirugiaId(e.getCirugia().getId());
             dto.setFechaAsignacion(e.getFechaAsignacion());
 
-            // agregar info del personal (objeto) usando personalMap
+            // agregar info del personal (objeto)
             Personal p = e.getPersonal();
             if (p != null) {
                 PersonalDto.Response pDto = modelMapper.map(p, PersonalDto.Response.class);
@@ -224,6 +232,19 @@ public class CirugiaServiceImpl implements CirugiaService {
                 .map(e -> modelMapper.map(e, CirugiaDTO.Response.class))
                 .collect(Collectors.toList());
 
+        mapearPacientes(entidades, dtos);
+        mapearServicios(entidades, dtos);
+
+        PageResponse<CirugiaDTO.Response> resp = new PageResponse<>();
+        resp.setContent(dtos);
+        resp.setNumber(p.getNumber());
+        resp.setSize(p.getSize());
+        resp.setTotalElements(p.getTotalElements());
+        resp.setTotalPages(p.getTotalPages());
+        return resp;
+    }
+
+    private void mapearPacientes(List<Cirugia> entidades, List<CirugiaDTO.Response> dtos) {
         List<Long> pacienteIds = entidades.stream()
                 .map(Cirugia::getPaciente)
                 .filter(Objects::nonNull)
@@ -249,8 +270,9 @@ public class CirugiaServiceImpl implements CirugiaService {
                 }
             }
         }
+    }
 
-        // Mapear servicios (batch fetch para evitar N+1)
+    private void mapearServicios(List<Cirugia> entidades, List<CirugiaDTO.Response> dtos) {
         List<Long> servicioIds = entidades.stream()
                 .map(Cirugia::getServicio)
                 .filter(Objects::nonNull)
@@ -276,16 +298,7 @@ public class CirugiaServiceImpl implements CirugiaService {
                 }
             }
         }
-
-        PageResponse<CirugiaDTO.Response> resp = new PageResponse<>();
-        resp.setContent(dtos);
-        resp.setNumber(p.getNumber());
-        resp.setSize(p.getSize());
-        resp.setTotalElements(p.getTotalElements());
-        resp.setTotalPages(p.getTotalPages());
-        return resp;
     }
-
 
     @Override
     public List<ServicioDto> getServicios() {
