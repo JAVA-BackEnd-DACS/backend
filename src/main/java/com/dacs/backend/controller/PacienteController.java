@@ -26,13 +26,9 @@ public class PacienteController {
     @Autowired
     private PacienteService pacienteService;
 
-    @Autowired
-    private ModelMapper modelMapper;
-
     @PostMapping("")
-    public ResponseEntity<PacienteDTO.Response> create(@RequestBody PacienteDTO.Create PacienteDTO) {
-        Paciente paciente = modelMapper.map(PacienteDTO, Paciente.class);
-        PacienteDTO.Response data = modelMapper.map(pacienteService.save(paciente), PacienteDTO.Response.class);
+    public ResponseEntity<PacienteDTO.Response> create(@RequestBody PacienteDTO.Request pacienteDTO) {
+        PacienteDTO.Response data = pacienteService.crear(pacienteDTO);
         return new ResponseEntity<PacienteDTO.Response>(data, HttpStatus.CREATED);
     }
 

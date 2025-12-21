@@ -8,8 +8,8 @@ import lombok.Data;
 public class PacienteDTO {
 
     @Data
-    static public class Create {
-
+    static public class Request{
+        private Long id;
         private String nombre;
         private String apellido;
         private String dni;
@@ -19,12 +19,7 @@ public class PacienteDTO {
         private String direccion;
         private String telefono;
     }
-
-    @Data
-    static public class Update extends Create {
-        private Long id;
-    }
-
+    
     @Data
     static public class Response {
         private Long id;

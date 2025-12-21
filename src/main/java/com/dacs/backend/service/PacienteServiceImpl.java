@@ -16,12 +16,16 @@ import com.dacs.backend.dto.PageResponse;
 import com.dacs.backend.model.entity.Paciente;
 import com.dacs.backend.model.repository.PacienteRepository;
 
+import io.micrometer.common.lang.NonNull;
+
 @Service
 public class PacienteServiceImpl implements PacienteService {
 
-    @Autowired PacienteRepository pacienteRepository;
+    @Autowired
+    PacienteRepository pacienteRepository;
 
-    @Autowired ModelMapper modelMapper;
+    @Autowired
+    ModelMapper modelMapper;
 
     @Override
     public Optional<Paciente> getById(Long id) {
@@ -43,12 +47,6 @@ public class PacienteServiceImpl implements PacienteService {
         return pacienteRepository.findAll();
     }
 
-    // @Override
-    // public List<PacienteDTO.Response> getPacientes() {
-    //     List<Paciente> pacientes = pacienteRepository.findAll();
-    //     return pacientes.stream().map(p -> modelMapper.map(p, PacienteDTO.Response.class)).toList();
-    // }
-
     @Override
     public void delete(Long id) {
         Optional<Paciente> paciente = getById(id);
@@ -66,6 +64,13 @@ public class PacienteServiceImpl implements PacienteService {
     }
 
     @Override
+    public PacienteDTO.Response crear(PacienteDTO.Request pacienteDTO) {
+        Paciente paciente = modelMapper.map(pacienteDTO, Paciente.class);
+        Paciente savedPaciente = pacienteRepository.save(paciente);
+        return modelMapper.map(savedPaciente, PacienteDTO.Response.class);
+    }
+
+    @Override
     public List<PacienteDTO.Response> getPacientesByIds(List<Long> ids) {
         List<Paciente> pacientes = pacienteRepository.findAllById(ids);
         List<PacienteDTO.Response> pacientesDTO = pacientes.stream().map(p -> {
@@ -76,38 +81,29 @@ public class PacienteServiceImpl implements PacienteService {
             dto.setFecha_nacimiento((p.getFecha_nacimiento()));
             dto.setTelefono(p.getTelefono());
             dto.setPeso(p.getPeso());
-            dto.setDireccion(p.getDireccion());    
+            dto.setDireccion(p.getDireccion());
             return dto;
         }).toList();
         return pacientesDTO;
     }
 
-    // @Override
-    // public List<PacienteDTO.Response> getAll(int page, int size, String search) {
-    //     Pageable pageable = PageRequest.of(page, size);
-    //     List<Paciente> pacientes = pacienteRepository.findAll(pageable).getContent();
-    //     return pacientes.stream()
-    //             .map(p -> modelMapper.map(p, PacienteDTO.Response.class))
-    //             .toList();
-    // }
-
     @Override
     public PageResponse<PacienteDTO.Response> getByPage(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Paciente> pacientePage;
-        
+
         // Si hay search, filtrar; si no, traer todos
         if (search != null && !search.isBlank()) {
             pacientePage = pacienteRepository.findBySearch(search, pageable);
         } else {
             pacientePage = pacienteRepository.findAll(pageable);
         }
-        
+
         // Mapear a DTO
         List<PacienteDTO.Response> content = pacientePage.getContent().stream()
-            .map(p -> modelMapper.map(p, PacienteDTO.Response.class))
-            .toList();
-        
+                .map(p -> modelMapper.map(p, PacienteDTO.Response.class))
+                .toList();
+
         // Retornar PageResponse con metadata de paginación
         PageResponse<PacienteDTO.Response> response = new PageResponse<>();
         response.setContent(content);
