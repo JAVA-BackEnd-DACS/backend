@@ -71,6 +71,7 @@ public class CirugiaController {
     public ResponseEntity<CirugiaDTO.Response> update(@PathVariable Long id,
             @RequestBody CirugiaDTO.Request cirugiaDto) throws Exception {
         CirugiaDTO.Response response = cirugiaService.update(id, cirugiaDto);
+     System.err.println("Response from update: " + response);
         return ResponseEntity.ok(response);
     }
 
