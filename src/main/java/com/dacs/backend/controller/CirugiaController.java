@@ -34,6 +34,7 @@ import com.dacs.backend.model.repository.CirugiaRepository;
 import com.dacs.backend.model.repository.PacienteRepository;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,14 @@ public class CirugiaController {
             @RequestParam(name = "size", required = false, defaultValue = "16") int size) {
         PageResponse<CirugiaDTO.Response> cirugias = cirugiaService.get(page, size);
         return ResponseEntity.ok(cirugias);
+    }
+
+    @GetMapping("/entre-fechas")
+    public ResponseEntity<List<CirugiaDTO.Response>> getBetweenDates(@RequestParam String fechaInicio,
+            @RequestParam String fechaFin) {
+         ResponseEntity<List<CirugiaDTO.Response>> resp = ResponseEntity.ok(cirugiaService.getBetweenDates(parseFecha(fechaInicio), parseFecha(fechaFin)));
+         System.err.println("Respuesta de getBetweenDates: " + resp);
+         return resp;
     }
 
     @PostMapping("")
@@ -106,4 +115,7 @@ public class CirugiaController {
         return ResponseEntity.ok(cirugiaService.getServicios());
     }
 
+    public static LocalDate parseFecha(String fecha) {
+        return LocalDate.parse(fecha); // formato ISO: "yyyy-MM-dd"
+    }
 }

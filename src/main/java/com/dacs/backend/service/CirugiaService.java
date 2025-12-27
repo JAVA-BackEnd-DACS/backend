@@ -2,6 +2,7 @@ package com.dacs.backend.service;
 
 import com.dacs.backend.model.entity.Cirugia;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -18,9 +19,13 @@ public interface CirugiaService extends CommonService<Cirugia> {
 
     PageResponse<CirugiaDTO.Response> get(int page, int size);
 
+    List<CirugiaDTO.Response> getBetweenDates(LocalDate fecha, LocalDate fecha2);
+
     List<ServicioDto> getServicios();
 
     CirugiaDTO.Response create(CirugiaDTO.Request cirugiaRequestDto);
 
     CirugiaDTO.Response update(Long id, CirugiaDTO.Request cirugiaDto);
+
+    
 }

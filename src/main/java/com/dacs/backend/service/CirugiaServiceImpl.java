@@ -1,5 +1,6 @@
 package com.dacs.backend.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -61,6 +62,19 @@ public class CirugiaServiceImpl implements CirugiaService {
     }
 
     @Override
+    public List<CirugiaDTO.Response> getBetweenDates(LocalDate fecha, LocalDate fecha2) {
+        List<Cirugia> cirugias = cirugiaRepository.findByFecha_hora_inicioBetween(fecha.atTime(0, 0, 0),
+                fecha2.atTime(23, 59, 59));
+        List<CirugiaDTO.Response> resp = cirugias.stream()
+                .map(c -> modelMapper.map(c, CirugiaDTO.Response.class))
+                .collect(Collectors.toList());
+
+        mapearPacientes(cirugias, resp);
+        return resp;
+
+    }
+
+    @Override
     @Transactional
     public CirugiaDTO.Response create(CirugiaDTO.Request request) {
         // mapear request -> entidad (resuelve relaciones dentro del mapper)
@@ -102,7 +116,6 @@ public class CirugiaServiceImpl implements CirugiaService {
         }
         return cirugiaMapper.toResponseDto(cirugiaRepository.save(entity));
     }
-
 
     @Override
     public List<Cirugia> getAll() {
@@ -186,7 +199,8 @@ public class CirugiaServiceImpl implements CirugiaService {
         return mapearEquipoMedicoAResponse(saved);
     }
 
-    private List<EquipoMedico> construirEquipoMedico(List<MiembroEquipoMedicoDto.Create> req, Cirugia cirugia, Map<Long, Personal> personalMap) {
+    private List<EquipoMedico> construirEquipoMedico(List<MiembroEquipoMedicoDto.Create> req, Cirugia cirugia,
+            Map<Long, Personal> personalMap) {
         List<EquipoMedico> toSave = new java.util.ArrayList<>();
         for (MiembroEquipoMedicoDto.Create item : req) {
             Personal personal = personalMap.get(item.getPersonalId());
