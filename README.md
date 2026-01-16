@@ -3,8 +3,12 @@
 
 Microservicio para backend con base de datos postgres
 
-##Objetivo
+## Objetivo
 ![Texto alternativo](assets/infraestructura.png)
+
+
+## Configuracion
+![Texto alternativo](DACS - configuracion de infraestructura.pdf)
 
 
 # Levantar en entorno local
