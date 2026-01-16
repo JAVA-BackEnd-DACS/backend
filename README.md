@@ -8,7 +8,7 @@ Microservicio para backend con base de datos postgres
 
 
 ## Configuracion
-![ver el pdf](DACS-configuracion-de-infraestructura.pdf)
+![ver el pdf](assets/DACS-configuracion-de-infraestructura.pdf)
 
 
 # Levantar en entorno local
@@ -23,10 +23,3 @@ Opcionalmente se puede agregar el paŕametro:
 ```
 
 
-### API de Prueba
-
-Para chequear que la aplicacion levanto correctamente (Procedemos a consumir el servicio "/metrics/health"):
-
-```
-http://localhost:9003/metrics/health
-```
