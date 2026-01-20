@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dacs.backend.dto.PacienteDTO;
-import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.PaginationDto;
 import com.dacs.backend.model.entity.Paciente;
 import com.dacs.backend.service.PacienteService;
 
@@ -27,13 +27,13 @@ public class PacienteController {
     private PacienteService pacienteService;
 
     @PostMapping("")
-    public ResponseEntity<PacienteDTO.Response> create(@RequestBody PacienteDTO.Request pacienteDTO) {
-        PacienteDTO.Response data = pacienteService.crear(pacienteDTO);
+    public ResponseEntity<PacienteDTO.Response> create(@RequestBody PacienteDTO.Create pacienteDTO) {
+        PacienteDTO.Response data = pacienteService.creatPaciente(pacienteDTO);
         return new ResponseEntity<PacienteDTO.Response>(data, HttpStatus.CREATED);
     }
 
     @GetMapping("")
-    public ResponseEntity<PageResponse<PacienteDTO.Response>> getAll(
+    public ResponseEntity<PaginationDto<PacienteDTO.Response>> getAll(
             @RequestParam(name = "page", defaultValue = "0") Integer page,
             @RequestParam(name = "size", defaultValue = "16") Integer size,
             @RequestParam(name = "search", required = false) String search) {

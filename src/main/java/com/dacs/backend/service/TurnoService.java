@@ -1,12 +1,12 @@
 package com.dacs.backend.service;
 
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
-import com.dacs.backend.model.entity.Cirugia;
+import com.dacs.backend.model.entity.Turno;
+
 
 public interface TurnoService  {
 
-    List<LocalDateTime> getTurnosDisponibles(Long servicioId, int proximosDias);
+    List<Turno> getTurnosDisponibles(int pagi, int size, LocalDate fechaInicio, LocalDate fechaFin, Long quirofanoId);
 }

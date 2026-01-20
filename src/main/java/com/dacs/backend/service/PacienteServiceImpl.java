@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.dacs.backend.dto.PacienteDTO;
-import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.PaginationDto;
 import com.dacs.backend.model.entity.Paciente;
 import com.dacs.backend.model.repository.PacienteRepository;
 
@@ -64,7 +64,7 @@ public class PacienteServiceImpl implements PacienteService {
     }
 
     @Override
-    public PacienteDTO.Response crear(PacienteDTO.Request pacienteDTO) {
+    public PacienteDTO.Response creatPaciente(PacienteDTO.Create pacienteDTO) {
         Paciente paciente = modelMapper.map(pacienteDTO, Paciente.class);
         Paciente savedPaciente = pacienteRepository.save(paciente);
         return modelMapper.map(savedPaciente, PacienteDTO.Response.class);
@@ -88,7 +88,7 @@ public class PacienteServiceImpl implements PacienteService {
     }
 
     @Override
-    public PageResponse<PacienteDTO.Response> getByPage(int page, int size, String search) {
+    public PaginationDto<PacienteDTO.Response> getByPage(int page, int size, String search) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Paciente> pacientePage;
 
@@ -105,12 +105,25 @@ public class PacienteServiceImpl implements PacienteService {
                 .toList();
 
         // Retornar PageResponse con metadata de paginación
-        PageResponse<PacienteDTO.Response> response = new PageResponse<>();
+        PaginationDto.Response<PacienteDTO.Response> response = new PaginationDto.Response<>();
         response.setContent(content);
         response.setTotalElements(pacientePage.getTotalElements());
         response.setTotalPages(pacientePage.getTotalPages());
         response.setNumber(page);
         response.setSize(size);
         return response;
+    }
+
+    @Override
+    public PacienteDTO.Response updatePaciente(PacienteDTO.Update pacienteDTO) {
+        Long id = pacienteDTO.getId();
+        Optional<Paciente> existingPacienteOpt = pacienteRepository.findById(id);
+        if (existingPacienteOpt.isEmpty()) {
+            throw new IllegalArgumentException("Paciente no encontrado con id: " + id);
+        }
+        Paciente existingPaciente = existingPacienteOpt.get();
+        modelMapper.map(pacienteDTO, existingPaciente);
+        Paciente updatedPaciente = pacienteRepository.save(existingPaciente);
+        return modelMapper.map(updatedPaciente, PacienteDTO.Response.class);    
     }
 }

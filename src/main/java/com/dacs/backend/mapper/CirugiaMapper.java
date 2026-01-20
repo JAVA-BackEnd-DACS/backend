@@ -6,7 +6,7 @@ import org.modelmapper.ModelMapper;
 
 import com.dacs.backend.dto.CirugiaDTO;
 import com.dacs.backend.dto.PacienteDTO;
-import com.dacs.backend.dto.QuirofanoDto;
+import com.dacs.backend.dto.QuirofanoDTO;
 import com.dacs.backend.dto.ServicioDto;
 import com.dacs.backend.model.entity.Cirugia;
 import com.dacs.backend.model.entity.Paciente;
@@ -31,7 +31,7 @@ public class CirugiaMapper {
     @Autowired
     private QuirofanoRepository quirofanoRepository;
 
-    public Cirugia toEntity(CirugiaDTO.Request dto) {
+    public Cirugia toEntity(CirugiaDTO.Create dto) {
         Cirugia entity = new Cirugia();
         entity.setPrioridad(dto.getPrioridad());
         entity.setFecha_hora_inicio(dto.getFecha_hora_inicio());
@@ -71,7 +71,7 @@ public class CirugiaMapper {
             dto.setPaciente(pDto);
         }
         if (entity.getQuirofano() != null) {
-            QuirofanoDto qDto = modelMapper.map(entity.getQuirofano(), QuirofanoDto.class);
+            QuirofanoDTO qDto = modelMapper.map(entity.getQuirofano(), QuirofanoDTO.class);
             dto.setQuirofano(qDto);
         }
         if (entity.getServicio() != null) {

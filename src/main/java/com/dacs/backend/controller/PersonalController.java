@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.dacs.backend.dto.MiembroEquipoMedicoDto;
-import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.PaginationDto;
 import com.dacs.backend.dto.PersonalDto;
 import com.dacs.backend.model.entity.Personal;
 import com.dacs.backend.model.repository.PersonalRepository;
@@ -39,7 +39,7 @@ public class PersonalController {
 
 
     @GetMapping("")
-    public PageResponse<PersonalDto.Response> get(
+    public PaginationDto<PersonalDto.Response> get(
             @RequestParam(name = "page", required = false, defaultValue = "0") int page,
             @RequestParam(name = "size", required = false, defaultValue = "16") int size,
             @RequestParam(name = "search", required = false) String search) {

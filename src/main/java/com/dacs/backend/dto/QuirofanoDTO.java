@@ -1,7 +1,7 @@
 package com.dacs.backend.dto;
 import lombok.Data;
 @Data
-public class QuirofanoDto {
+public class QuirofanoDTO {
 
     private Long id;
     private String nombre;

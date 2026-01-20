@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dacs.backend.dto.CirugiaDTO;
 import com.dacs.backend.dto.MiembroEquipoMedicoDto;
 import com.dacs.backend.dto.PacienteDTO;
-import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.PaginationDto;
 import com.dacs.backend.dto.PersonalDto;
 import com.dacs.backend.dto.ServicioDto;
 import com.dacs.backend.mapper.CirugiaMapper;
@@ -62,22 +62,10 @@ public class CirugiaServiceImpl implements CirugiaService {
     }
 
     @Override
-    public List<CirugiaDTO.Response> getBetweenDates(LocalDate fecha, LocalDate fecha2) {
-        List<Cirugia> cirugias = cirugiaRepository.findByFecha_hora_inicioBetween(fecha.atTime(0, 0, 0),
-                fecha2.atTime(23, 59, 59));
-        List<CirugiaDTO.Response> resp = cirugias.stream()
-                .map(c -> modelMapper.map(c, CirugiaDTO.Response.class))
-                .collect(Collectors.toList());
-
-        mapearPacientes(cirugias, resp);
-        return resp;
-
-    }
-
-    @Override
     @Transactional
-    public CirugiaDTO.Response create(CirugiaDTO.Request request) {
+    public CirugiaDTO.Response createCirugia(CirugiaDTO.Create request) {
         // mapear request -> entidad (resuelve relaciones dentro del mapper)
+        
         Cirugia entity = cirugiaMapper.toEntity(request);
         Cirugia saved = cirugiaRepository.save(entity);
         // mapear entidad -> response DTO
@@ -106,7 +94,7 @@ public class CirugiaServiceImpl implements CirugiaService {
     }
 
     @Override
-    public CirugiaDTO.Response update(Long id, CirugiaDTO.Request requestDto) {
+    public CirugiaDTO.Response updateCirugia(Long id, CirugiaDTO.Update requestDto) {
         if (!cirugiaRepository.existsById(id)) {
             throw new IllegalArgumentException("Cirugia no encontrada id=" + id);
         }
@@ -217,29 +205,32 @@ public class CirugiaServiceImpl implements CirugiaService {
         return toSave;
     }
 
-    private List<MiembroEquipoMedicoDto.Response> mapearEquipoMedicoAResponse(List<EquipoMedico> saved) {
-        return saved.stream().map(e -> {
-            MiembroEquipoMedicoDto.Response dto = modelMapper.map(e, MiembroEquipoMedicoDto.Response.class);
-            // asegurar campos explícitos
-            dto.setRol(e.getRol());
-            if (e.getCirugia() != null)
-                dto.setCirugiaId(e.getCirugia().getId());
-            dto.setFechaAsignacion(e.getFechaAsignacion());
-
-            // agregar info del personal (objeto)
-            Personal p = e.getPersonal();
-            if (p != null) {
-                PersonalDto.Response pDto = modelMapper.map(p, PersonalDto.Response.class);
-                dto.setPersonal(pDto);
-            }
-            return dto;
-        }).collect(Collectors.toList());
-    }
+   
 
     @Override
-    public PageResponse<CirugiaDTO.Response> get(int page, int size) {
+    public PaginationDto<CirugiaDTO.Response> getCirugias(int page, int size, LocalDate fechaInicio, LocalDate fechaFin) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Cirugia> p = cirugiaRepository.findAll(pageable);
+        Page<Cirugia> p;
+
+        if (fechaInicio != null && fechaFin != null) {
+            p = cirugiaRepository.findByFecha_hora_inicioBetween(
+                fechaInicio.atStartOfDay(),
+                fechaFin.atTime(23, 59, 59),
+                pageable
+            );
+        } else if (fechaInicio != null) {
+            p = cirugiaRepository.findByFecha_hora_inicioAfter(
+                fechaInicio.atStartOfDay(),
+                pageable
+            );
+        } else if (fechaFin != null) {
+            p = cirugiaRepository.findByFecha_hora_inicioBefore(
+                fechaFin.atTime(23, 59, 59),
+                pageable
+            );
+        } else {
+            p = cirugiaRepository.findAll(pageable);
+        }
 
         List<Cirugia> entidades = p.getContent();
         List<CirugiaDTO.Response> dtos = entidades.stream()
@@ -249,7 +240,7 @@ public class CirugiaServiceImpl implements CirugiaService {
         mapearPacientes(entidades, dtos);
         mapearServicios(entidades, dtos);
 
-        PageResponse<CirugiaDTO.Response> resp = new PageResponse<>();
+        PaginationDto.Response<CirugiaDTO.Response> resp = new PaginationDto.Response<CirugiaDTO.Response>();
         resp.setContent(dtos);
         resp.setNumber(p.getNumber());
         resp.setSize(p.getSize());
@@ -319,5 +310,25 @@ public class CirugiaServiceImpl implements CirugiaService {
         return servicioRepository.findAll().stream()
                 .map(servicio -> modelMapper.map(servicio, ServicioDto.class))
                 .collect(Collectors.toList());
+    }
+
+
+     private List<MiembroEquipoMedicoDto.Response> mapearEquipoMedicoAResponse(List<EquipoMedico> saved) {
+        return saved.stream().map(e -> {
+            MiembroEquipoMedicoDto.Response dto = modelMapper.map(e, MiembroEquipoMedicoDto.Response.class);
+            // asegurar campos explícitos
+            dto.setRol(e.getRol());
+            if (e.getCirugia() != null)
+                dto.setCirugiaId(e.getCirugia().getId());
+            dto.setFechaAsignacion(e.getFechaAsignacion());
+
+            // agregar info del personal (objeto)
+            Personal p = e.getPersonal();
+            if (p != null) {
+                PersonalDto.Response pDto = modelMapper.map(p, PersonalDto.Response.class);
+                dto.setPersonal(pDto);
+            }
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

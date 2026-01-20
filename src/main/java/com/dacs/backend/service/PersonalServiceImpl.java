@@ -9,7 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.PaginationDto;
 import com.dacs.backend.dto.PersonalDto;
 import com.dacs.backend.model.entity.Personal;
 import com.dacs.backend.model.repository.PersonalRepository;
@@ -53,7 +53,7 @@ public class PersonalServiceImpl implements PersonalService {
     }
 
    @Override
-   public PageResponse<PersonalDto.Response> getAll(int page, int size, String search) {
+   public PaginationDto<PersonalDto.Response> getAll(int page, int size, String search) {
        Pageable pageable = PageRequest.of(page, size);
        Page<Personal> personalPage;
        
@@ -67,7 +67,7 @@ public class PersonalServiceImpl implements PersonalService {
                .map(personal -> modelMapper.map(personal, PersonalDto.Response.class))
                .toList();
        
-       PageResponse<PersonalDto.Response> response = new PageResponse<>();
+       PaginationDto.Response<PersonalDto.Response> response = new PaginationDto.Response<>();
        response.setContent(content);
        response.setTotalElements(personalPage.getTotalElements());
        response.setTotalPages(personalPage.getTotalPages());

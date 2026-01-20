@@ -25,7 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.PaginationDto;
 import com.dacs.backend.dto.ServicioDto;
 import com.dacs.backend.mapper.CirugiaMapper;
 import com.dacs.backend.model.entity.Cirugia;
@@ -54,31 +54,25 @@ public class CirugiaController {
     private TurnoService turnoService;
 
     @GetMapping("")
-    public ResponseEntity<PageResponse<CirugiaDTO.Response>> getByPage(
+    public ResponseEntity<PaginationDto<CirugiaDTO.Response>> getByPage(
             @RequestParam(name = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(name = "size", required = false, defaultValue = "16") int size) {
-        PageResponse<CirugiaDTO.Response> cirugias = cirugiaService.get(page, size);
+            @RequestParam(name = "size", required = false, defaultValue = "20") int size,
+            @RequestParam(name = "fechaInicio", required = false) String fechaInicio,
+            @RequestParam(name = "fechaFin", required = false) String fechaFin) {
+        PaginationDto<CirugiaDTO.Response> cirugias = cirugiaService.getCirugias(page, size, parseFecha(fechaInicio), parseFecha(fechaFin));
         return ResponseEntity.ok(cirugias);
     }
 
-    @GetMapping("/entre-fechas")
-    public ResponseEntity<List<CirugiaDTO.Response>> getBetweenDates(@RequestParam String fechaInicio,
-            @RequestParam String fechaFin) {
-         ResponseEntity<List<CirugiaDTO.Response>> resp = ResponseEntity.ok(cirugiaService.getBetweenDates(parseFecha(fechaInicio), parseFecha(fechaFin)));
-         System.err.println("Respuesta de getBetweenDates: " + resp);
-         return resp;
-    }
-
     @PostMapping("")
-    public ResponseEntity<CirugiaDTO.Response> create(@RequestBody CirugiaDTO.Request cirugiaRequestDto) {
-        CirugiaDTO.Response cirugiaResponse = cirugiaService.create(cirugiaRequestDto);
+    public ResponseEntity<CirugiaDTO.Response> create(@RequestBody CirugiaDTO.Create cirugiaRequestDto) {
+        CirugiaDTO.Response cirugiaResponse = cirugiaService.createCirugia(cirugiaRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(cirugiaResponse);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CirugiaDTO.Response> update(@PathVariable Long id,
-            @RequestBody CirugiaDTO.Request cirugiaDto) {
-        CirugiaDTO.Response response = cirugiaService.update(id, cirugiaDto);
+            @RequestBody CirugiaDTO.Update cirugiaDto) {
+        CirugiaDTO.Response response = cirugiaService.updateCirugia(id, cirugiaDto);
         System.err.println("Response from update: " + response);
         return ResponseEntity.ok(response);
     }
@@ -102,12 +96,6 @@ public class CirugiaController {
 
         List<MiembroEquipoMedicoDto.Response> resp = cirugiaService.saveEquipoMedico(id, entityEquipoMedico);
         return ResponseEntity.status((HttpStatus.CREATED)).body(resp);
-    }
-
-    @GetMapping("/horarios-disponibles")
-    public ResponseEntity<List<LocalDateTime>> getTurnosDisponibles(@RequestParam Integer cantidadProximosDias,
-            @RequestParam Long servicioId) {
-        return ResponseEntity.ok(turnoService.getTurnosDisponibles(servicioId, cantidadProximosDias));
     }
 
     @GetMapping("/servicios")

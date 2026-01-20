@@ -2,7 +2,7 @@ package com.dacs.backend.service;
 
 import java.util.List;
 
-import com.dacs.backend.dto.PageResponse;
+import com.dacs.backend.dto.PaginationDto;
 import com.dacs.backend.dto.PersonalDto;
 
 public interface PersonalService {
@@ -12,7 +12,7 @@ public interface PersonalService {
 
     void delete(Long id);
 
-    PageResponse<PersonalDto.Response> getAll(int page, int size, String search);
+    PaginationDto<PersonalDto.Response> getAll(int page, int size, String search);
 
 
 }
