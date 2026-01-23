@@ -68,10 +68,10 @@ public class PersonalServiceImpl implements PersonalService {
                .toList();
        
        PaginationDto.Response<PersonalDto.Response> response = new PaginationDto.Response<>();
-       response.setContent(content);
-       response.setTotalElements(personalPage.getTotalElements());
-       response.setTotalPages(personalPage.getTotalPages());
-       response.setNumber(personalPage.getNumber());
+       response.setContenido(content);
+       response.setTotalElementos(personalPage.getTotalElements());
+       response.setTotalPaginas(personalPage.getTotalPages());
+       response.setPagina(personalPage.getNumber());
        response.setSize(personalPage.getSize());
        
        return response;

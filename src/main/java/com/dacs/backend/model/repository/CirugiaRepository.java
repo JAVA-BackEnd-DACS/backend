@@ -10,10 +10,10 @@ import com.dacs.backend.model.entity.Cirugia;
 
 public interface CirugiaRepository extends JpaRepository<Cirugia, Long> {
 
-    Page<Cirugia> findByFecha_hora_inicioBetween(LocalDateTime atStartOfDay, LocalDateTime atTime, Pageable pageable);
+    Page<Cirugia> findByFechaHoraInicioBetween(LocalDateTime atStartOfDay, LocalDateTime atTime, Pageable pageable);
 
-    Page<Cirugia> findByFecha_hora_inicioAfter(LocalDateTime atStartOfDay, Pageable pageable);
+    Page<Cirugia> findByFechaHoraInicioAfter(LocalDateTime atStartOfDay, Pageable pageable);
 
-    Page<Cirugia> findByFecha_hora_inicioBefore(LocalDateTime atTime, Pageable pageable);
+    Page<Cirugia> findByFechaHoraInicioBefore(LocalDateTime atTime, Pageable pageable);
 
 }

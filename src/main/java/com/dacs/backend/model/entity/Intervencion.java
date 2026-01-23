@@ -14,7 +14,7 @@ import lombok.Data;
 public class Intervencion {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String id;
+    private Long id;
 
     @Column(length = 100, nullable = false)
     private String nombre; 

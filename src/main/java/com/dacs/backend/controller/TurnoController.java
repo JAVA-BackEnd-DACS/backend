@@ -37,12 +37,17 @@ public class TurnoController {
     }
 
     @GetMapping("/disponible")
-    public Boolean EstaDisponible(@RequestParam String fechaInicio,
+    public ResponseEntity<Boolean> EstaDisponible(@RequestParam String fechaInicio,
         @RequestParam String fechaFin,
         @RequestParam Long quirofanoId) {    
-     
-         List<Turno> disponible = turnoService.getTurnosDisponibles(0, 100, parseFecha(fechaInicio), parseFecha(fechaFin),quirofanoId);
-        return !disponible.isEmpty() && disponible.stream().allMatch(t -> "DISPONIBLE".equals(t.getEstado()));  // Devuelve true si todos los turnos están disponibles
+
+        return ResponseEntity.ok(
+            turnoService.verificarDisponibilidadTurno(
+                quirofanoId, 
+                parseFecha(fechaInicio), 
+                parseFecha(fechaFin)
+            )
+        );
     }
     
     public static LocalDate parseFecha(String fecha) {

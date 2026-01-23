@@ -227,16 +227,16 @@ public class CirugiaServiceImpl implements CirugiaService {
         Page<Cirugia> p;
 
         if (fechaInicio != null && fechaFin != null) {
-            p = cirugiaRepository.findByFecha_hora_inicioBetween(
+            p = cirugiaRepository.findByFechaHoraInicioBetween(
                     fechaInicio.atStartOfDay(),
                     fechaFin.atTime(23, 59, 59),
                     pageable);
         } else if (fechaInicio != null) {
-            p = cirugiaRepository.findByFecha_hora_inicioAfter(
+            p = cirugiaRepository.findByFechaHoraInicioAfter(
                     fechaInicio.atStartOfDay(),
                     pageable);
         } else if (fechaFin != null) {
-            p = cirugiaRepository.findByFecha_hora_inicioBefore(
+            p = cirugiaRepository.findByFechaHoraInicioBefore(
                     fechaFin.atTime(23, 59, 59),
                     pageable);
         } else {
@@ -252,11 +252,11 @@ public class CirugiaServiceImpl implements CirugiaService {
         mapearServicios(entidades, dtos);
 
         PaginationDto.Response<CirugiaDTO.Response> resp = new PaginationDto.Response<CirugiaDTO.Response>();
-        resp.setContent(dtos);
-        resp.setNumber(p.getNumber());
+        resp.setContenido(dtos);
+        resp.setPagina(p.getNumber());
         resp.setSize(p.getSize());
-        resp.setTotalElements(p.getTotalElements());
-        resp.setTotalPages(p.getTotalPages());
+        resp.setTotalElementos(p.getTotalElements());
+        resp.setTotalPaginas(p.getTotalPages());
         return resp;
     }
 

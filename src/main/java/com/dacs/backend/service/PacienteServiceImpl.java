@@ -106,10 +106,10 @@ public class PacienteServiceImpl implements PacienteService {
 
         // Retornar PageResponse con metadata de paginación
         PaginationDto.Response<PacienteDTO.Response> response = new PaginationDto.Response<>();
-        response.setContent(content);
-        response.setTotalElements(pacientePage.getTotalElements());
-        response.setTotalPages(pacientePage.getTotalPages());
-        response.setNumber(page);
+        response.setContenido(content);
+        response.setTotalElementos(pacientePage.getTotalElements());
+        response.setTotalPaginas(pacientePage.getTotalPages());
+        response.setPagina(page);
         response.setSize(size);
         return response;
     }

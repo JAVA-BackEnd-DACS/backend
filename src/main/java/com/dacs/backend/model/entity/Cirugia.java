@@ -25,7 +25,7 @@ public class Cirugia {
     private String prioridad;
 
     @Column(nullable = false)
-    private LocalDateTime fecha_hora_inicio;
+    private LocalDateTime fechaHoraInicio;
 
     @Column(nullable = false)
     private String estado;
