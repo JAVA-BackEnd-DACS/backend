@@ -111,7 +111,7 @@ public class PacienteServiceImpl implements PacienteService {
         response.setTotalElementos(pacientePage.getTotalElements());
         response.setTotalPaginas(pacientePage.getTotalPages());
         response.setPagina(page);
-        response.setTamanio(size);
+        response.setTamaño(size);
         return response;
     }
 

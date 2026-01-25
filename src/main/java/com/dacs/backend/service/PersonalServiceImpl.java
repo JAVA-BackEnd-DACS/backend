@@ -72,7 +72,7 @@ public class PersonalServiceImpl implements PersonalService {
        response.setTotalElementos(personalPage.getTotalElements());
        response.setTotalPaginas(personalPage.getTotalPages());
        response.setPagina(personalPage.getNumber());
-       response.setTamanio(personalPage.getSize());
+       response.setTamaño(personalPage.getSize());
        
        return response;
    }

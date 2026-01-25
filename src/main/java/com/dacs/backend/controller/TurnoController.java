@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.dacs.backend.model.entity.Turno;
 import com.dacs.backend.service.TurnoService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
@@ -22,8 +23,8 @@ public class TurnoController {
     @Autowired
     private TurnoService turnoService;
 
-    //@Autowired
-    //private ModelMapper modelMapper;
+    // @Autowired
+    // private ModelMapper modelMapper;
 
     @GetMapping("")
     public ResponseEntity<List<Turno>> getTurnosDisponibles(
@@ -33,26 +34,30 @@ public class TurnoController {
             @RequestParam String fechaFin,
             @RequestParam Long quirofanoId) {
         return ResponseEntity
-                .ok(turnoService.getTurnosDisponibles(page, size, parseFecha(fechaInicio), parseFecha(fechaFin), quirofanoId));
+                .ok(turnoService.getTurnosDisponibles(page, size, parseFecha(fechaInicio), parseFecha(fechaFin),
+                        quirofanoId));
     }
 
     @GetMapping("/disponible")
     public ResponseEntity<Boolean> EstaDisponible(@RequestParam String fechaInicio,
-        @RequestParam String fechaFin,
-        @RequestParam Long quirofanoId) {    
+            @RequestParam String fechaFin,
+            @RequestParam Long quirofanoId) {
 
         return ResponseEntity.ok(
-            turnoService.verificarDisponibilidadTurno(
-                quirofanoId, 
-                parseFecha(fechaInicio), 
-                parseFecha(fechaFin)
-            )
-        );
-    }
-    
-    public static LocalDate parseFecha(String fecha) {
-        return LocalDate.parse(fecha); // formato ISO: "yyyy-MM-dd"
+                turnoService.verificarDisponibilidadTurno(
+                        quirofanoId,
+                        parseFecha(fechaInicio),
+                        parseFecha(fechaFin)));
     }
 
+    @PostMapping("/generar-turnos")
+    public ResponseEntity<Void> generarTurnos() {
+        turnoService.generarTurnosAutomaticaMensual();
+        return ResponseEntity.ok().build();
+    }
+
+    public static LocalDateTime parseFecha(String fecha) {
+        return LocalDateTime.parse(fecha); // formato ISO: "yyyy-MM-dd"
+    }
 
 }

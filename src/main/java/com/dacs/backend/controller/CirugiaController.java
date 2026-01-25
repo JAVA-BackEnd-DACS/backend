@@ -55,11 +55,12 @@ public class CirugiaController {
 
     @GetMapping("")
     public ResponseEntity<PaginacionDto<CirugiaDTO.Response>> getByPage(
-            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(name = "size", required = false, defaultValue = "20") int size,
+            @RequestParam(name = "pagina", required = false, defaultValue = "0") int pagina,
+            @RequestParam(name = "tamano", required = false, defaultValue = "20") int tamano,
             @RequestParam(name = "fechaInicio", required = false) String fechaInicio,
             @RequestParam(name = "fechaFin", required = false) String fechaFin) {
-        PaginacionDto<CirugiaDTO.Response> cirugias = cirugiaService.getCirugias(page, size, parseFecha(fechaInicio), parseFecha(fechaFin));
+                System.err.println("tamano: " + tamano);
+        PaginacionDto<CirugiaDTO.Response> cirugias = cirugiaService.getCirugias(pagina, tamano, parseFecha(fechaInicio), parseFecha(fechaFin));
         return ResponseEntity.ok(cirugias);
     }
 
@@ -99,8 +100,8 @@ public class CirugiaController {
     }
 
     @GetMapping("/servicios")
-    public ResponseEntity<List<ServicioDto>> getServicios() {
-        return ResponseEntity.ok(cirugiaService.getServicios());
+    public ResponseEntity<List<ServicioDto>> getServicios(@RequestParam int pagina, @RequestParam int tamano) {
+        return ResponseEntity.ok(cirugiaService.getServicios(pagina, tamano));
     }
 
     public static LocalDate parseFecha(String fecha) {

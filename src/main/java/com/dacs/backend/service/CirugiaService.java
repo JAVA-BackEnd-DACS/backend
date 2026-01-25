@@ -17,9 +17,9 @@ public interface CirugiaService extends CommonService<Cirugia> {
 
     List<MiembroEquipoMedicoDto.Response> getEquipoMedico(Long cirugiaId);
 
-    PaginacionDto<CirugiaDTO.Response> getCirugias(int page, int size, LocalDate fechaInicio, LocalDate fechaFin);
+    PaginacionDto<CirugiaDTO.Response> getCirugias(int pagina, int tamaño, LocalDate fechaInicio, LocalDate fechaFin);
 
-    List<ServicioDto> getServicios();
+    List<ServicioDto> getServicios(int pagina, int tamaño);
 
     CirugiaDTO.Response createCirugia(CirugiaDTO.Create cirugiaRequestDto);
 

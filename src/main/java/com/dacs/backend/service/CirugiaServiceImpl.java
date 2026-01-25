@@ -73,7 +73,10 @@ public class CirugiaServiceImpl implements CirugiaService {
         Long quirofanoId = request.getQuirofanoId();
         LocalDateTime fechaHoraInicio = request.getFechaHoraInicio();
         LocalDateTime fechaHoraFin = fechaHoraInicio.plusMinutes(servicioRepository.findById(servicioId).get().getDuracionMinutos()); // suposición
-        Boolean disponibilidad = turnoService.verificarDisponibilidadTurno(quirofanoId, fechaHoraInicio.toLocalDate(), fechaHoraFin.toLocalDate());
+        
+      //  System.out.println("FechaHoraInicio: " + fechaHoraFin);
+      
+        Boolean disponibilidad = turnoService.verificarDisponibilidadTurno(quirofanoId, fechaHoraInicio, fechaHoraFin);
         if (!disponibilidad) {  
             throw new IllegalArgumentException("No hay turnos disponibles para el quirófano en la fecha y hora solicitadas.");
         }
@@ -81,7 +84,7 @@ public class CirugiaServiceImpl implements CirugiaService {
         Cirugia entity = cirugiaMapper.toEntity(request);
         Cirugia saved = cirugiaRepository.save(entity);
         
-        turnoService.asignarTurno(saved.getId(), quirofanoId, fechaHoraInicio.toLocalDate(), fechaHoraFin.toLocalDate());
+        turnoService.asignarTurno(saved.getId(), quirofanoId, fechaHoraInicio, fechaHoraFin);
         
         // mapear entidad -> response DTO
         return cirugiaMapper.toResponseDto(saved);
@@ -221,9 +224,10 @@ public class CirugiaServiceImpl implements CirugiaService {
     }
 
     @Override
-    public PaginacionDto.Response<CirugiaDTO.Response> getCirugias(int page, int size, LocalDate fechaInicio,
+    public PaginacionDto.Response<CirugiaDTO.Response> getCirugias(int pagina, int tamaño, LocalDate fechaInicio,
             LocalDate fechaFin) {
-        Pageable pageable = PageRequest.of(page, size);
+        System.err.println("asdasdasdsa: " + pagina + ", size: " + tamaño);
+        Pageable pageable = PageRequest.of(pagina, tamaño);
         Page<Cirugia> p;
 
         if (fechaInicio != null && fechaFin != null) {
@@ -253,7 +257,7 @@ public class CirugiaServiceImpl implements CirugiaService {
         PaginacionDto.Response<CirugiaDTO.Response> resp = new PaginacionDto.Response<CirugiaDTO.Response>();
         resp.setContenido(dtos);
         resp.setPagina(p.getNumber());
-        resp.setTamanio(p.getSize());
+        resp.setTamaño(p.getSize());
         resp.setTotalElementos(p.getTotalElements());
         resp.setTotalPaginas(p.getTotalPages());
         return resp;
@@ -316,10 +320,12 @@ public class CirugiaServiceImpl implements CirugiaService {
     }
 
     @Override
-    public List<ServicioDto> getServicios() {
-        return servicioRepository.findAll().stream()
-                .map(servicio -> modelMapper.map(servicio, ServicioDto.class))
-                .collect(Collectors.toList());
+    public List<ServicioDto> getServicios( int pagina, int tamaño) {
+        Pageable pageable = PageRequest.of(pagina, tamaño);
+        return servicioRepository.findAll(pageable)
+            .stream()
+            .map(s -> modelMapper.map(s, ServicioDto.class))
+            .collect(Collectors.toList());
     }
 
     private List<MiembroEquipoMedicoDto.Response> mapearEquipoMedicoAResponse(List<EquipoMedico> saved) {
