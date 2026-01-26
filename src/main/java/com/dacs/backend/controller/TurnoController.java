@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.dacs.backend.dto.PaginacionDto;
+import com.dacs.backend.dto.TurnoDTO;
 import com.dacs.backend.model.entity.Turno;
 import com.dacs.backend.service.TurnoService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,15 +29,16 @@ public class TurnoController {
     // private ModelMapper modelMapper;
 
     @GetMapping("")
-    public ResponseEntity<List<Turno>> getTurnosDisponibles(
-            @RequestParam(name = "page", required = false, defaultValue = "0") int page,
-            @RequestParam(name = "size", required = false, defaultValue = "20") int size,
-            @RequestParam String fechaInicio,
-            @RequestParam String fechaFin,
-            @RequestParam Long quirofanoId) {
-        return ResponseEntity
-                .ok(turnoService.getTurnosDisponibles(page, size, parseFecha(fechaInicio), parseFecha(fechaFin),
-                        quirofanoId));
+    public PaginacionDto.Response<TurnoDTO> getTurnosDisponibles(
+            @RequestParam(name = "pagina", required = false, defaultValue = "0") int pagina,
+            @RequestParam(name = "tamano", required = false, defaultValue = "20") int tamano,
+            @RequestParam(required = true) String fechaInicio,
+            @RequestParam(required = true) String fechaFin,
+            @RequestParam(required = false, defaultValue = "0") int quirofanoId,
+            @RequestParam(required = false, defaultValue = "") String estado) {
+        System.out.println("asdasdas:" + quirofanoId);
+        return turnoService.getTurnosDisponibles(pagina, tamano, parseFecha(fechaInicio), parseFecha(fechaFin),
+                quirofanoId, estado);
     }
 
     @GetMapping("/disponible")

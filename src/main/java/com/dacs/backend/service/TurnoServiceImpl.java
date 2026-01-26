@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.dacs.backend.model.entity.Turno;
+import com.dacs.backend.dto.CirugiaDTO;
+import com.dacs.backend.dto.PaginacionDto;
+import com.dacs.backend.dto.TurnoDTO;
 import com.dacs.backend.model.entity.Cirugia;
 import com.dacs.backend.model.entity.Quirofano;
 import com.dacs.backend.model.repository.TurnoRepository;
@@ -29,18 +32,63 @@ public class TurnoServiceImpl implements TurnoService {
     private QuirofanoRepository quirofanoRepository;
 
     @Override
-    public List<Turno> getTurnosDisponibles(int pagi, int size, LocalDateTime fechaInicio, LocalDateTime fechaFin,
-            Long quirofanoId) {
-        List<Turno> turnosDisponibles = new ArrayList<>();
+    public PaginacionDto.Response<TurnoDTO> getTurnosDisponibles(int pagina, int tamano, LocalDateTime fechaInicio,
+            LocalDateTime fechaFin,
+            int quirofanoId, String estado) {
+        // Si fechaInicio o fechaFin llegan como string vacío, asignar valores por defecto
+        if (fechaInicio == null) {
+            fechaInicio = LocalDateTime.now();
+        }
+        if (fechaFin == null) {
+            fechaFin = fechaInicio.plusDays(30);
+        }
 
-        turnoRepository.findAllByFechaHoraInicioBetween(fechaInicio, fechaFin)
-                .forEach(turno -> {
-                    if (turno.getEstado().equals("DISPONIBLE") && turno.getQuirofano().getId().equals(quirofanoId)) {
-                        turnosDisponibles.add(turno);
-                    }
-                });
+        List<Turno> turnos;
+        boolean filtrarEstado = (estado != null && !estado.isEmpty());
+        boolean filtrarQuirofano = (quirofanoId != 0);
 
-        return turnosDisponibles;
+        if (filtrarQuirofano && filtrarEstado) {
+            turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndQuirofanoIdAndEstado(
+                    fechaInicio, fechaFin, (long) quirofanoId, estado);
+        } else if (filtrarQuirofano) {
+            turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndQuirofanoId(
+                    fechaInicio, fechaFin, (long) quirofanoId);
+        } else if (filtrarEstado) {
+            turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndEstado(
+                    fechaInicio, fechaFin, estado);
+        } else {
+            turnos = turnoRepository.findAllByFechaHoraInicioBetween(fechaInicio, fechaFin);
+        }
+
+        // Map Turno to TurnoDTO
+        List<com.dacs.backend.dto.TurnoDTO> turnoDTOs = new ArrayList<>();
+        for (Turno t : turnos) {
+            com.dacs.backend.dto.TurnoDTO dto = new com.dacs.backend.dto.TurnoDTO();
+            dto.setId(t.getId());
+            dto.setFechaHoraInicio(t.getFechaHoraInicio());
+            dto.setEstado(t.getEstado());
+            if (t.getQuirofano() != null) {
+                dto.setQuirofanoId(t.getQuirofano().getId());
+            }
+            if (t.getCirugia() != null) {
+                dto.setCirugiaId(t.getCirugia().getId());
+            }
+            turnoDTOs.add(dto);
+        }
+
+        // Pagination logic
+        int totalElementos = turnoDTOs.size();
+        int fromIndex = Math.min(pagina * tamano, totalElementos);
+        int toIndex = Math.min(fromIndex + tamano, totalElementos);
+        List<com.dacs.backend.dto.TurnoDTO> pageContent = turnoDTOs.subList(fromIndex, toIndex);
+
+        PaginacionDto.Response<com.dacs.backend.dto.TurnoDTO> resp = new PaginacionDto.Response<>();
+        resp.setContenido(pageContent);
+        resp.setPagina(pagina);
+        resp.setTamaño(tamano);
+        resp.setTotalElementos(totalElementos);
+        resp.setTotalPaginas((int) Math.ceil((double) totalElementos / tamano));
+        return resp;
     }
 
     @Override
@@ -59,21 +107,22 @@ public class TurnoServiceImpl implements TurnoService {
     public Turno asignarTurno(Long cirugiaId, Long quirofanoId, LocalDateTime fechaHoraInicio,
             LocalDateTime fechaHoraFin) {
         List<Turno> turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndQuirofanoIdAndEstado(fechaHoraInicio,
-            fechaHoraFin, quirofanoId, "DISPONIBLE");
-        // Filtrar solo los turnos cuyo fechaHoraInicio sea >= fechaHoraInicio y < fechaHoraFin
+                fechaHoraFin, quirofanoId, "DISPONIBLE");
+        // Filtrar solo los turnos cuyo fechaHoraInicio sea >= fechaHoraInicio y <
+        // fechaHoraFin
         List<Turno> turnosEnRango = new ArrayList<>();
         for (Turno t : turnos) {
             if (!t.getFechaHoraInicio().isBefore(fechaHoraInicio) && t.getFechaHoraInicio().isBefore(fechaHoraFin)) {
-            turnosEnRango.add(t);
+                turnosEnRango.add(t);
             }
         }
-        System.err.println("Turnos disponibles encontrados: " + turnosEnRango);  
+        System.err.println("Turnos disponibles encontrados: " + turnosEnRango);
         if (turnosEnRango.isEmpty()) {
             throw new IllegalArgumentException(
-                "No hay turnos disponibles para el quirófano en la fecha y hora solicitadas.");
+                    "No hay turnos disponibles para el quirófano en la fecha y hora solicitadas.");
         }
         Cirugia cirugia = cirugiaRepository.findById(cirugiaId)
-            .orElseThrow(() -> new IllegalArgumentException("Cirugía no encontrada con ID: " + cirugiaId));
+                .orElseThrow(() -> new IllegalArgumentException("Cirugía no encontrada con ID: " + cirugiaId));
 
         for (Turno t : turnosEnRango) {
             t.setCirugia(cirugia);
@@ -107,7 +156,8 @@ public class TurnoServiceImpl implements TurnoService {
         LocalDateTime fechaLimite = ahora.plusDays(30);
 
         // Generar turnos durante los próximos 30 días
-        for (LocalDateTime fecha = ahora.truncatedTo(ChronoUnit.DAYS); fecha.isBefore(fechaLimite); fecha = fecha.plusDays(1)) {
+        for (LocalDateTime fecha = ahora.truncatedTo(ChronoUnit.DAYS); fecha
+                .isBefore(fechaLimite); fecha = fecha.plusDays(1)) {
             LocalDateTime horaInicio = fecha.withHour(8).withMinute(0).withSecond(0).withNano(0); // 8:00 AM
             LocalDateTime horaFin = fecha.withHour(18).withMinute(0).withSecond(0).withNano(0); // 6:00 PM
 

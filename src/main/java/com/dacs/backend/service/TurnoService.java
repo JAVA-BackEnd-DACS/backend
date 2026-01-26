@@ -4,12 +4,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.dacs.backend.dto.PaginacionDto;
+import com.dacs.backend.dto.TurnoDTO;
 import com.dacs.backend.model.entity.Turno;
 
 
 public interface TurnoService  {
 
-    List<Turno> getTurnosDisponibles(int pagi, int size, LocalDateTime fechaInicio, LocalDateTime fechaFin, Long quirofanoId);
+    PaginacionDto.Response<TurnoDTO> getTurnosDisponibles(int pagina, int tamano, LocalDateTime fechaInicio, LocalDateTime fechaFin, int quirofanoId, String estado);
 
     Boolean verificarDisponibilidadTurno(Long quirofanoId, LocalDateTime fechaHoraInicio, LocalDateTime fechaHoraFin);
 
