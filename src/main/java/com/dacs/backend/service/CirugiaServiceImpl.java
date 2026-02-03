@@ -75,7 +75,9 @@ public class CirugiaServiceImpl implements CirugiaService {
         LocalDateTime fechaHoraFin = fechaHoraInicio.plusMinutes(servicioRepository.findById(servicioId).get().getDuracionMinutos()); // suposición
         
       //  System.out.println("FechaHoraInicio: " + fechaHoraFin);
-      
+        System.out.println("FechaHoraFin: " + fechaHoraFin);
+        System.out.println("QuirofanoId: " + quirofanoId);
+        System.out.println("fechaHoraInicioss: " + fechaHoraInicio);
         Boolean disponibilidad = turnoService.verificarDisponibilidadTurno(quirofanoId, fechaHoraInicio, fechaHoraFin);
         if (!disponibilidad) {  
             throw new IllegalArgumentException("No hay turnos disponibles para el quirófano en la fecha y hora solicitadas.");
