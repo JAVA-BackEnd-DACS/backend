@@ -16,4 +16,13 @@ public interface CirugiaRepository extends JpaRepository<Cirugia, Long> {
 
     Page<Cirugia> findByFechaHoraInicioBefore(LocalDateTime atTime, Pageable pageable);
 
+    // Métodos con filtro por estado
+    Page<Cirugia> findByEstado(String estado, Pageable pageable);
+
+    Page<Cirugia> findByEstadoAndFechaHoraInicioBetween(String estado, LocalDateTime atStartOfDay, LocalDateTime atTime, Pageable pageable);
+
+    Page<Cirugia> findByEstadoAndFechaHoraInicioAfter(String estado, LocalDateTime atStartOfDay, Pageable pageable);
+
+    Page<Cirugia> findByEstadoAndFechaHoraInicioBefore(String estado, LocalDateTime atTime, Pageable pageable);
+
 }

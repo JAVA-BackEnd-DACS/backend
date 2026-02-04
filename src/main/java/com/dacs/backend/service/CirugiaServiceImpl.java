@@ -131,6 +131,16 @@ public class CirugiaServiceImpl implements CirugiaService {
     }
 
     @Override
+    public CirugiaDTO.Response finalizarCirugia(long cirugiaId) {
+        Cirugia cirugia = cirugiaRepository.findById(cirugiaId)
+                .orElseThrow(() -> new IllegalArgumentException("Cirugia no encontrada id=" + cirugiaId));
+        //cirugia.setFechaHoraFin(LocalDateTime.now());   AGREGAR CAMPO EN ENTITY SI ES NECESARIO
+        cirugia.setEstado("FINALIZADA");
+        Cirugia updated = cirugiaRepository.save(cirugia);
+        return cirugiaMapper.toResponseDto(updated);
+    }
+
+    @Override
     public List<MiembroEquipoMedicoDto.Response> getEquipoMedico(Long cirugiaId) {
         List<EquipoMedico> equipo = equipoMedicoRepository.findByCirugiaId(cirugiaId);
 
@@ -227,26 +237,52 @@ public class CirugiaServiceImpl implements CirugiaService {
 
     @Override
     public PaginacionDto.Response<CirugiaDTO.Response> getCirugias(int pagina, int tamaño, LocalDate fechaInicio,
-            LocalDate fechaFin) {
+            LocalDate fechaFin, String estado) {
         System.err.println("asdasdasdsa: " + pagina + ", size: " + tamaño);
         Pageable pageable = PageRequest.of(pagina, tamaño);
         Page<Cirugia> p;
 
-        if (fechaInicio != null && fechaFin != null) {
-            p = cirugiaRepository.findByFechaHoraInicioBetween(
-                    fechaInicio.atStartOfDay(),
-                    fechaFin.atTime(23, 59, 59),
-                    pageable);
-        } else if (fechaInicio != null) {
-            p = cirugiaRepository.findByFechaHoraInicioAfter(
-                    fechaInicio.atStartOfDay(),
-                    pageable);
-        } else if (fechaFin != null) {
-            p = cirugiaRepository.findByFechaHoraInicioBefore(
-                    fechaFin.atTime(23, 59, 59),
-                    pageable);
+        boolean tieneEstado = estado != null && !estado.isBlank();
+
+        if (tieneEstado) {
+            // Filtrar por estado
+            if (fechaInicio != null && fechaFin != null) {
+                p = cirugiaRepository.findByEstadoAndFechaHoraInicioBetween(
+                        estado,
+                        fechaInicio.atStartOfDay(),
+                        fechaFin.atTime(23, 59, 59),
+                        pageable);
+            } else if (fechaInicio != null) {
+                p = cirugiaRepository.findByEstadoAndFechaHoraInicioAfter(
+                        estado,
+                        fechaInicio.atStartOfDay(),
+                        pageable);
+            } else if (fechaFin != null) {
+                p = cirugiaRepository.findByEstadoAndFechaHoraInicioBefore(
+                        estado,
+                        fechaFin.atTime(23, 59, 59),
+                        pageable);
+            } else {
+                p = cirugiaRepository.findByEstado(estado, pageable);
+            }
         } else {
-            p = cirugiaRepository.findAll(pageable);
+            // Sin filtro de estado
+            if (fechaInicio != null && fechaFin != null) {
+                p = cirugiaRepository.findByFechaHoraInicioBetween(
+                        fechaInicio.atStartOfDay(),
+                        fechaFin.atTime(23, 59, 59),
+                        pageable);
+            } else if (fechaInicio != null) {
+                p = cirugiaRepository.findByFechaHoraInicioAfter(
+                        fechaInicio.atStartOfDay(),
+                        pageable);
+            } else if (fechaFin != null) {
+                p = cirugiaRepository.findByFechaHoraInicioBefore(
+                        fechaFin.atTime(23, 59, 59),
+                        pageable);
+            } else {
+                p = cirugiaRepository.findAll(pageable);
+            }
         }
 
         List<Cirugia> entidades = p.getContent();

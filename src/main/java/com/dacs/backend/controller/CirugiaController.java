@@ -58,9 +58,10 @@ public class CirugiaController {
             @RequestParam(name = "pagina", required = false, defaultValue = "0") int pagina,
             @RequestParam(name = "tamano", required = false, defaultValue = "20") int tamano,
             @RequestParam(name = "fechaInicio", required = false) String fechaInicio,
-            @RequestParam(name = "fechaFin", required = false) String fechaFin) {
+            @RequestParam(name = "fechaFin", required = false) String fechaFin,
+            @RequestParam(name = "estado", required = false) String estado) {
                 System.err.println("tamano: " + tamano);
-        PaginacionDto<CirugiaDTO.Response> cirugias = cirugiaService.getCirugias(pagina, tamano, parseFecha(fechaInicio), parseFecha(fechaFin));
+        PaginacionDto<CirugiaDTO.Response> cirugias = cirugiaService.getCirugias(pagina, tamano, parseFecha(fechaInicio), parseFecha(fechaFin), estado);
         return ResponseEntity.ok(cirugias);
     }
 
@@ -74,7 +75,6 @@ public class CirugiaController {
     public ResponseEntity<CirugiaDTO.Response> update(@PathVariable Long id,
             @RequestBody CirugiaDTO.Update cirugiaDto) {
         CirugiaDTO.Response response = cirugiaService.updateCirugia(id, cirugiaDto);
-        System.err.println("Response from update: " + response);
         return ResponseEntity.ok(response);
     }
 
@@ -87,8 +87,8 @@ public class CirugiaController {
     @GetMapping("/{id}/equipo-medico")
     public ResponseEntity<List<MiembroEquipoMedicoDto.Response>> getEquipoMedico(@PathVariable Long id) {
 
-        List<MiembroEquipoMedicoDto.Response> Equipo = cirugiaService.getEquipoMedico(id);
-        return ResponseEntity.ok(Equipo);
+        List<MiembroEquipoMedicoDto.Response> equipo = cirugiaService.getEquipoMedico(id);
+        return ResponseEntity.ok(equipo);
     }
 
     @PostMapping("/{id}/equipo-medico")
@@ -109,5 +109,11 @@ public class CirugiaController {
             return null;
         }
         return LocalDate.parse(fecha); // formato ISO: "yyyy-MM-dd"
+    }
+
+    @PutMapping("/{id}/finalizar")
+    public ResponseEntity<CirugiaDTO.Response> finalizarCirugia(@PathVariable String id) {
+        CirugiaDTO.Response entity = cirugiaService.finalizarCirugia(Long.parseLong(id));        
+        return ResponseEntity.ok(entity);
     }
 }
