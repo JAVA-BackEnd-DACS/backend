@@ -108,15 +108,11 @@ public class CirugiaServiceImpl implements CirugiaService {
     @Override
     @Transactional
     public void delete(Long id) {
-        Optional<Cirugia> cirugia = getById(id);
-        if (cirugia.isPresent()) {
-            // Eliminar turnos asociados primero
-            turnoRepository.deleteByCirugiaId(id);
-            // Eliminar equipo médico asociado
-            equipoMedicoRepository.deleteByCirugiaId(id);
-            // Eliminar la cirugía
-            cirugiaRepository.delete(cirugia.get());
-        }
+        Cirugia cirugia = cirugiaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Cirugía no encontrada id=" + id));
+        // Soft delete: cambiar estado a CANCELADA
+        cirugia.setEstado(EstadoCirugia.CANCELADA);
+        cirugiaRepository.save(cirugia);
     }
 
     @Override
