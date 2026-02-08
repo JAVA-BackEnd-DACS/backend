@@ -26,4 +26,8 @@ public interface CirugiaService extends CommonService<Cirugia> {
     CirugiaDTO.Response updateCirugia(Long id, CirugiaDTO.Update cirugiaDto);
 
     CirugiaDTO.Response finalizarCirugia(long long1);
+
+    Long countCirugiasRestantesHoy();
+
+    Long countCirugiasEstaSemana();
 }

@@ -391,4 +391,23 @@ public class CirugiaServiceImpl implements CirugiaService {
             return dto;
         }).collect(Collectors.toList());
     }
+
+    @Override
+    public Long countCirugiasRestantesHoy(){
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = LocalDate.now().atTime(23, 59, 59);
+        return cirugiaRepository.countByEstadoAndFechaHoraInicioBetween(EstadoCirugia.PROGRAMADA, startOfDay, endOfDay);
+    }
+
+    @Override
+    public Long countCirugiasEstaSemana(){
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.minusDays(today.getDayOfWeek().getValue() - 1); // Lunes
+        LocalDate endOfWeek = startOfWeek.plusDays(6); // Domingo
+
+        LocalDateTime startOfWeekDateTime = startOfWeek.atStartOfDay();
+        LocalDateTime endOfWeekDateTime = endOfWeek.atTime(23, 59, 59);
+
+        return cirugiaRepository.countByEstadoAndFechaHoraInicioBetween(EstadoCirugia.PROGRAMADA, startOfWeekDateTime, endOfWeekDateTime);
+    }
 }

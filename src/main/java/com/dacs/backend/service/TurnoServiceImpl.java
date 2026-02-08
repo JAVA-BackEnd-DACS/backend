@@ -43,38 +43,53 @@ public class TurnoServiceImpl implements TurnoService {
             fechaFin = fechaInicio.plusDays(30);
         }
 
-        List<Turno> turnos;
-        boolean filtrarEstado = (estado != null && !estado.isEmpty());
-        boolean filtrarQuirofano = (quirofanoId != 0);
 
-        if (filtrarQuirofano && filtrarEstado) {
-            turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndQuirofanoIdAndEstado(
-                    fechaInicio, fechaFin, (long) quirofanoId, estado);
-        } else if (filtrarQuirofano) {
+        // --- INICIO CAMBIO: Filtrar turnos realmente disponibles para la duración ---
+        // Suponiendo que la duración del servicio se recibe como parámetro adicional (ej: minutosDuracion)
+        int minutosDuracion = 60; // <-- AJUSTAR: obtener este valor según tu lógica/endpoint
+        int bloquesNecesarios = minutosDuracion / 30;
+        if (minutosDuracion % 30 != 0) bloquesNecesarios++;
+
+        List<Turno> turnos;
+        boolean filtrarQuirofano = (quirofanoId != 0);
+        if (filtrarQuirofano) {
             turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndQuirofanoId(
-                    fechaInicio, fechaFin, (long) quirofanoId);
-        } else if (filtrarEstado) {
-            turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndEstado(
-                    fechaInicio, fechaFin, estado);
+                fechaInicio, fechaFin, (long) quirofanoId);
         } else {
             turnos = turnoRepository.findAllByFechaHoraInicioBetween(fechaInicio, fechaFin);
         }
 
-        // Map Turno to TurnoDTO
+        // Solo considerar turnos DISPONIBLE cuyo bloque y los siguientes estén libres
         List<com.dacs.backend.dto.TurnoDTO> turnoDTOs = new ArrayList<>();
         for (Turno t : turnos) {
-            com.dacs.backend.dto.TurnoDTO dto = new com.dacs.backend.dto.TurnoDTO();
-            dto.setId(t.getId());
-            dto.setFechaHoraInicio(t.getFechaHoraInicio());
-            dto.setEstado(t.getEstado());
-            if (t.getQuirofano() != null) {
-                dto.setQuirofanoId(t.getQuirofano().getId());
+            if (!"DISPONIBLE".equalsIgnoreCase(t.getEstado())) continue;
+            boolean disponible = true;
+            LocalDateTime actual = t.getFechaHoraInicio();
+            for (int i = 0; i < bloquesNecesarios; i++) {
+                LocalDateTime bloque = actual.plusMinutes(i * 30);
+                boolean bloqueLibre = turnos.stream().anyMatch(tt ->
+                    tt.getFechaHoraInicio().equals(bloque) && "DISPONIBLE".equalsIgnoreCase(tt.getEstado())
+                );
+                if (!bloqueLibre) {
+                    disponible = false;
+                    break;
+                }
             }
-            if (t.getCirugia() != null) {
-                dto.setCirugiaId(t.getCirugia().getId());
+            if (disponible) {
+                com.dacs.backend.dto.TurnoDTO dto = new com.dacs.backend.dto.TurnoDTO();
+                dto.setId(t.getId());
+                dto.setFechaHoraInicio(t.getFechaHoraInicio());
+                dto.setEstado(t.getEstado());
+                if (t.getQuirofano() != null) {
+                    dto.setQuirofanoId(t.getQuirofano().getId());
+                }
+                if (t.getCirugia() != null) {
+                    dto.setCirugiaId(t.getCirugia().getId());
+                }
+                turnoDTOs.add(dto);
             }
-            turnoDTOs.add(dto);
         }
+        // --- FIN CAMBIO ---
 
         // Pagination logic
         int totalElementos = turnoDTOs.size();
@@ -99,8 +114,23 @@ public class TurnoServiceImpl implements TurnoService {
         System.out.println("Cantidad de turnos necesarios: " + cantidad);
         System.out.println("FechaHoraIniciod: " + fechaHoraInicio);
         System.out.println("FechaHoraFin: " + fechaHoraFin);
-        return turnoRepository.findAllByFechaHoraInicioBetweenAndQuirofanoIdAndEstado(
-                fechaHoraInicio, fechaHoraFin, quirofanoId, "DISPONIBLE").size() > cantidad;
+
+        // Obtener todos los turnos en el rango para el quirófano
+        List<Turno> turnos = turnoRepository.findAllByFechaHoraInicioBetweenAndQuirofanoId(
+            fechaHoraInicio, fechaHoraFin.minusMinutes(1), quirofanoId);
+
+        // Verificar que todos los bloques requeridos estén DISPONIBLE y sean consecutivos
+        for (int i = 0; i < cantidad; i++) {
+            LocalDateTime actual = fechaHoraInicio.plusMinutes(i * 30);
+            boolean disponible = turnos.stream().anyMatch(t ->
+                t.getFechaHoraInicio().equals(actual) &&
+                "DISPONIBLE".equalsIgnoreCase(t.getEstado())
+            );
+            if (!disponible) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

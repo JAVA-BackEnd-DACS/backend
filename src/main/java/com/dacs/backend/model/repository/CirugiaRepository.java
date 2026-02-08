@@ -25,4 +25,7 @@ public interface CirugiaRepository extends JpaRepository<Cirugia, Long> {
 
     Page<Cirugia> findByEstadoAndFechaHoraInicioBefore(EstadoCirugia estado, LocalDateTime atTime, Pageable pageable);
 
+    Long countByEstadoAndFechaHoraInicioBetween(EstadoCirugia programada, LocalDateTime startOfDay,
+            LocalDateTime endOfDay);
+
 }

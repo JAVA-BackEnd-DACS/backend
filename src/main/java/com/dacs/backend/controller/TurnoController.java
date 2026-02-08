@@ -31,7 +31,7 @@ public class TurnoController {
     @GetMapping("")
     public PaginacionDto.Response<TurnoDTO> getTurnosDisponibles(
             @RequestParam(name = "pagina", required = false, defaultValue = "0") int pagina,
-            @RequestParam(name = "tamano", required = false, defaultValue = "20") int tamano,
+            @RequestParam(name = "tamano", required = false, defaultValue = "300") int tamano,
             @RequestParam(required = true) String fechaInicio,
             @RequestParam(required = true) String fechaFin,
             @RequestParam(required = false, defaultValue = "0") int quirofanoId,

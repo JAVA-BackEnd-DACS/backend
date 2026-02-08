@@ -1,5 +1,6 @@
 package com.dacs.backend.service;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,12 +9,17 @@ import org.springframework.stereotype.Service;
 import com.dacs.backend.model.entity.Paciente;
 import com.dacs.backend.model.entity.Quirofano;
 import com.dacs.backend.model.repository.QuirofanoRepository;
+import com.dacs.backend.model.repository.TurnoRepository;
+import java.time.LocalDateTime;
 
 @Service
 public class QuirofanoServiceImpl implements QuirofanoService {
 
     @Autowired
-    QuirofanoRepository quirofanoRepository;
+    private QuirofanoRepository quirofanoRepository;
+
+    @Autowired
+    private TurnoRepository turnoRepository;
 
     @Override
     public Optional<Quirofano> getById(Long id) {
@@ -44,5 +50,26 @@ public class QuirofanoServiceImpl implements QuirofanoService {
     @Override
     public Quirofano getBy(java.util.Map<String, Object> filter) {
         throw new UnsupportedOperationException();
+    }
+
+
+
+    public List<Quirofano> quirofanosDisponibles() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Quirofano> todos = quirofanoRepository.findAll();
+        // Solo turnos que están activos en este instante
+        List<Long> enUsoIds = turnoRepository.findAllByFechaHoraInicioBetween(
+            now, now
+        ).stream().map(t -> t.getQuirofano().getId()).distinct().toList();
+        return todos.stream().filter(q -> !enUsoIds.contains(q.getId())).toList();
+    }
+
+
+    public List<Quirofano> quirofanosEnUso() {
+        LocalDateTime now = LocalDateTime.now();
+        List<Long> enUsoIds = turnoRepository.findAllByFechaHoraInicioBetween(
+            now, now
+        ).stream().map(t -> t.getQuirofano().getId()).distinct().toList();
+        return quirofanoRepository.findAll().stream().filter(q -> enUsoIds.contains(q.getId())).toList();
     }
 }

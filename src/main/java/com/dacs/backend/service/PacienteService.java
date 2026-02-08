@@ -20,4 +20,6 @@ public interface PacienteService extends CommonService<Paciente>{
     Response creatPaciente(Create pacienteDTO);
     
     Response updatePaciente(Update pacienteDTO);
+
+    long countPacientes();
 }

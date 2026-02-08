@@ -127,4 +127,9 @@ public class PacienteServiceImpl implements PacienteService {
         Paciente updatedPaciente = pacienteRepository.save(existingPaciente);
         return modelMapper.map(updatedPaciente, PacienteDTO.Response.class);    
     }
+
+    @Override
+    public long countPacientes() {
+        return pacienteRepository.count();
+    }
 }
